@@ -27,9 +27,9 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   ALLOC
  11 .ARM.attributes 0000002e  00000000  00000000  0000d088  2**0
                   CONTENTS, READONLY
- 12 .debug_info   000180ad  00000000  00000000  0000d0b6  2**0
+ 12 .debug_info   000180ac  00000000  00000000  0000d0b6  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 13 .debug_abbrev 00002d44  00000000  00000000  00025163  2**0
+ 13 .debug_abbrev 00002d44  00000000  00000000  00025162  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
  14 .debug_aranges 00001188  00000000  00000000  00027ea8  2**3
                   CONTENTS, READONLY, DEBUGGING, OCTETS
@@ -821,18 +821,14 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) {
  80008ca:	4293      	cmp	r3, r2
  80008cc:	d105      	bne.n	80008da <HAL_ADC_ConvCpltCallback+0x1e>
 
-
 		      ch_pair_full_ready = 1;   // full 512 samples/channel now ready
  80008ce:	4b07      	ldr	r3, [pc, #28]	@ (80008ec <HAL_ADC_ConvCpltCallback+0x30>)
  80008d0:	2201      	movs	r2, #1
  80008d2:	701a      	strb	r2, [r3, #0]
-
 		      full_ready = 1;
  80008d4:	4b06      	ldr	r3, [pc, #24]	@ (80008f0 <HAL_ADC_ConvCpltCallback+0x34>)
  80008d6:	2201      	movs	r2, #1
  80008d8:	701a      	strb	r2, [r3, #0]
-
-
 	    }
 
 }
@@ -860,7 +856,6 @@ void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef* hadc) {
  8000900:	4a07      	ldr	r2, [pc, #28]	@ (8000920 <HAL_ADC_ConvHalfCpltCallback+0x2c>)
  8000902:	4293      	cmp	r3, r2
  8000904:	d105      	bne.n	8000912 <HAL_ADC_ConvHalfCpltCallback+0x1e>
-
 
 		    ch_pair_half_ready = 1;   // you now have the first 256 samples/channel
  8000906:	4b07      	ldr	r3, [pc, #28]	@ (8000924 <HAL_ADC_ConvHalfCpltCallback+0x30>)
@@ -1482,12 +1477,12 @@ static void MX_MDMA_Init(void)
 
   /* MDMA controller clock enable */
   __HAL_RCC_MDMA_CLK_ENABLE();
- 8000c9e:	4b77      	ldr	r3, [pc, #476]	@ (8000e7c <MX_MDMA_Init+0x1e4>)
+ 8000c9e:	4b78      	ldr	r3, [pc, #480]	@ (8000e80 <MX_MDMA_Init+0x1e8>)
  8000ca0:	f8d3 30d4 	ldr.w	r3, [r3, #212]	@ 0xd4
- 8000ca4:	4a75      	ldr	r2, [pc, #468]	@ (8000e7c <MX_MDMA_Init+0x1e4>)
+ 8000ca4:	4a76      	ldr	r2, [pc, #472]	@ (8000e80 <MX_MDMA_Init+0x1e8>)
  8000ca6:	f043 0301 	orr.w	r3, r3, #1
  8000caa:	f8c2 30d4 	str.w	r3, [r2, #212]	@ 0xd4
- 8000cae:	4b73      	ldr	r3, [pc, #460]	@ (8000e7c <MX_MDMA_Init+0x1e4>)
+ 8000cae:	4b74      	ldr	r3, [pc, #464]	@ (8000e80 <MX_MDMA_Init+0x1e8>)
  8000cb0:	f8d3 30d4 	ldr.w	r3, [r3, #212]	@ 0xd4
  8000cb4:	f003 0301 	and.w	r3, r3, #1
  8000cb8:	607b      	str	r3, [r7, #4]
@@ -1498,306 +1493,305 @@ static void MX_MDMA_Init(void)
   /* Configure MDMA channel MDMA_Channel0 */
   /* Configure MDMA request hmdma_mdma_channel0_dma1_stream0_tc_0 on MDMA_Channel0 */
   hmdma_mdma_channel0_dma1_stream0_tc_0.Instance = MDMA_Channel0;
- 8000cbc:	4b70      	ldr	r3, [pc, #448]	@ (8000e80 <MX_MDMA_Init+0x1e8>)
- 8000cbe:	4a71      	ldr	r2, [pc, #452]	@ (8000e84 <MX_MDMA_Init+0x1ec>)
+ 8000cbc:	4b71      	ldr	r3, [pc, #452]	@ (8000e84 <MX_MDMA_Init+0x1ec>)
+ 8000cbe:	4a72      	ldr	r2, [pc, #456]	@ (8000e88 <MX_MDMA_Init+0x1f0>)
  8000cc0:	601a      	str	r2, [r3, #0]
   hmdma_mdma_channel0_dma1_stream0_tc_0.Init.Request = MDMA_REQUEST_DMA1_Stream0_TC;
- 8000cc2:	4b6f      	ldr	r3, [pc, #444]	@ (8000e80 <MX_MDMA_Init+0x1e8>)
+ 8000cc2:	4b70      	ldr	r3, [pc, #448]	@ (8000e84 <MX_MDMA_Init+0x1ec>)
  8000cc4:	2200      	movs	r2, #0
  8000cc6:	605a      	str	r2, [r3, #4]
   hmdma_mdma_channel0_dma1_stream0_tc_0.Init.TransferTriggerMode = MDMA_FULL_TRANSFER;
- 8000cc8:	4b6d      	ldr	r3, [pc, #436]	@ (8000e80 <MX_MDMA_Init+0x1e8>)
+ 8000cc8:	4b6e      	ldr	r3, [pc, #440]	@ (8000e84 <MX_MDMA_Init+0x1ec>)
  8000cca:	f04f 5240 	mov.w	r2, #805306368	@ 0x30000000
  8000cce:	609a      	str	r2, [r3, #8]
   hmdma_mdma_channel0_dma1_stream0_tc_0.Init.Priority = MDMA_PRIORITY_LOW;
- 8000cd0:	4b6b      	ldr	r3, [pc, #428]	@ (8000e80 <MX_MDMA_Init+0x1e8>)
+ 8000cd0:	4b6c      	ldr	r3, [pc, #432]	@ (8000e84 <MX_MDMA_Init+0x1ec>)
  8000cd2:	2200      	movs	r2, #0
  8000cd4:	60da      	str	r2, [r3, #12]
   hmdma_mdma_channel0_dma1_stream0_tc_0.Init.Endianness = MDMA_LITTLE_ENDIANNESS_PRESERVE;
- 8000cd6:	4b6a      	ldr	r3, [pc, #424]	@ (8000e80 <MX_MDMA_Init+0x1e8>)
+ 8000cd6:	4b6b      	ldr	r3, [pc, #428]	@ (8000e84 <MX_MDMA_Init+0x1ec>)
  8000cd8:	2200      	movs	r2, #0
  8000cda:	611a      	str	r2, [r3, #16]
   hmdma_mdma_channel0_dma1_stream0_tc_0.Init.SourceInc = MDMA_SRC_INC_HALFWORD;
- 8000cdc:	4b68      	ldr	r3, [pc, #416]	@ (8000e80 <MX_MDMA_Init+0x1e8>)
+ 8000cdc:	4b69      	ldr	r3, [pc, #420]	@ (8000e84 <MX_MDMA_Init+0x1ec>)
  8000cde:	f44f 7281 	mov.w	r2, #258	@ 0x102
  8000ce2:	615a      	str	r2, [r3, #20]
   hmdma_mdma_channel0_dma1_stream0_tc_0.Init.DestinationInc = MDMA_DEST_INC_HALFWORD;
- 8000ce4:	4b66      	ldr	r3, [pc, #408]	@ (8000e80 <MX_MDMA_Init+0x1e8>)
+ 8000ce4:	4b67      	ldr	r3, [pc, #412]	@ (8000e84 <MX_MDMA_Init+0x1ec>)
  8000ce6:	f44f 6281 	mov.w	r2, #1032	@ 0x408
  8000cea:	619a      	str	r2, [r3, #24]
-  hmdma_mdma_channel0_dma1_stream0_tc_0.Init.SourceDataSize = MDMA_SRC_DATASIZE_BYTE;
- 8000cec:	4b64      	ldr	r3, [pc, #400]	@ (8000e80 <MX_MDMA_Init+0x1e8>)
- 8000cee:	2200      	movs	r2, #0
+  hmdma_mdma_channel0_dma1_stream0_tc_0.Init.SourceDataSize = MDMA_SRC_DATASIZE_HALFWORD;
+ 8000cec:	4b65      	ldr	r3, [pc, #404]	@ (8000e84 <MX_MDMA_Init+0x1ec>)
+ 8000cee:	2210      	movs	r2, #16
  8000cf0:	61da      	str	r2, [r3, #28]
-  hmdma_mdma_channel0_dma1_stream0_tc_0.Init.DestDataSize = MDMA_DEST_DATASIZE_BYTE;
- 8000cf2:	4b63      	ldr	r3, [pc, #396]	@ (8000e80 <MX_MDMA_Init+0x1e8>)
- 8000cf4:	2200      	movs	r2, #0
+  hmdma_mdma_channel0_dma1_stream0_tc_0.Init.DestDataSize = MDMA_DEST_DATASIZE_HALFWORD;
+ 8000cf2:	4b64      	ldr	r3, [pc, #400]	@ (8000e84 <MX_MDMA_Init+0x1ec>)
+ 8000cf4:	2240      	movs	r2, #64	@ 0x40
  8000cf6:	621a      	str	r2, [r3, #32]
   hmdma_mdma_channel0_dma1_stream0_tc_0.Init.DataAlignment = MDMA_DATAALIGN_RIGHT;
- 8000cf8:	4b61      	ldr	r3, [pc, #388]	@ (8000e80 <MX_MDMA_Init+0x1e8>)
+ 8000cf8:	4b62      	ldr	r3, [pc, #392]	@ (8000e84 <MX_MDMA_Init+0x1ec>)
  8000cfa:	2200      	movs	r2, #0
  8000cfc:	625a      	str	r2, [r3, #36]	@ 0x24
   hmdma_mdma_channel0_dma1_stream0_tc_0.Init.BufferTransferLength = 512;
- 8000cfe:	4b60      	ldr	r3, [pc, #384]	@ (8000e80 <MX_MDMA_Init+0x1e8>)
+ 8000cfe:	4b61      	ldr	r3, [pc, #388]	@ (8000e84 <MX_MDMA_Init+0x1ec>)
  8000d00:	f44f 7200 	mov.w	r2, #512	@ 0x200
  8000d04:	629a      	str	r2, [r3, #40]	@ 0x28
   hmdma_mdma_channel0_dma1_stream0_tc_0.Init.SourceBurst = MDMA_SOURCE_BURST_8BEATS;
- 8000d06:	4b5e      	ldr	r3, [pc, #376]	@ (8000e80 <MX_MDMA_Init+0x1e8>)
+ 8000d06:	4b5f      	ldr	r3, [pc, #380]	@ (8000e84 <MX_MDMA_Init+0x1ec>)
  8000d08:	f44f 5240 	mov.w	r2, #12288	@ 0x3000
  8000d0c:	62da      	str	r2, [r3, #44]	@ 0x2c
-  hmdma_mdma_channel0_dma1_stream0_tc_0.Init.DestBurst = MDMA_DEST_BURST_SINGLE;
- 8000d0e:	4b5c      	ldr	r3, [pc, #368]	@ (8000e80 <MX_MDMA_Init+0x1e8>)
- 8000d10:	2200      	movs	r2, #0
- 8000d12:	631a      	str	r2, [r3, #48]	@ 0x30
+  hmdma_mdma_channel0_dma1_stream0_tc_0.Init.DestBurst = MDMA_DEST_BURST_8BEATS;
+ 8000d0e:	4b5d      	ldr	r3, [pc, #372]	@ (8000e84 <MX_MDMA_Init+0x1ec>)
+ 8000d10:	f44f 32c0 	mov.w	r2, #98304	@ 0x18000
+ 8000d14:	631a      	str	r2, [r3, #48]	@ 0x30
   hmdma_mdma_channel0_dma1_stream0_tc_0.Init.SourceBlockAddressOffset = 2;
- 8000d14:	4b5a      	ldr	r3, [pc, #360]	@ (8000e80 <MX_MDMA_Init+0x1e8>)
- 8000d16:	2202      	movs	r2, #2
- 8000d18:	635a      	str	r2, [r3, #52]	@ 0x34
+ 8000d16:	4b5b      	ldr	r3, [pc, #364]	@ (8000e84 <MX_MDMA_Init+0x1ec>)
+ 8000d18:	2202      	movs	r2, #2
+ 8000d1a:	635a      	str	r2, [r3, #52]	@ 0x34
   hmdma_mdma_channel0_dma1_stream0_tc_0.Init.DestBlockAddressOffset = 0;
- 8000d1a:	4b59      	ldr	r3, [pc, #356]	@ (8000e80 <MX_MDMA_Init+0x1e8>)
- 8000d1c:	2200      	movs	r2, #0
- 8000d1e:	639a      	str	r2, [r3, #56]	@ 0x38
+ 8000d1c:	4b59      	ldr	r3, [pc, #356]	@ (8000e84 <MX_MDMA_Init+0x1ec>)
+ 8000d1e:	2200      	movs	r2, #0
+ 8000d20:	639a      	str	r2, [r3, #56]	@ 0x38
   if (HAL_MDMA_Init(&hmdma_mdma_channel0_dma1_stream0_tc_0) != HAL_OK)
- 8000d20:	4857      	ldr	r0, [pc, #348]	@ (8000e80 <MX_MDMA_Init+0x1e8>)
- 8000d22:	f004 fd26 	bl	8005772 <HAL_MDMA_Init>
- 8000d26:	4603      	mov	r3, r0
- 8000d28:	2b00      	cmp	r3, #0
- 8000d2a:	d001      	beq.n	8000d30 <MX_MDMA_Init+0x98>
+ 8000d22:	4858      	ldr	r0, [pc, #352]	@ (8000e84 <MX_MDMA_Init+0x1ec>)
+ 8000d24:	f004 fd25 	bl	8005772 <HAL_MDMA_Init>
+ 8000d28:	4603      	mov	r3, r0
+ 8000d2a:	2b00      	cmp	r3, #0
+ 8000d2c:	d001      	beq.n	8000d32 <MX_MDMA_Init+0x9a>
   {
     Error_Handler();
- 8000d2c:	f000 f974 	bl	8001018 <Error_Handler>
+ 8000d2e:	f000 f973 	bl	8001018 <Error_Handler>
   }
 
   /* Configure post request address and data masks */
   if (HAL_MDMA_ConfigPostRequestMask(&hmdma_mdma_channel0_dma1_stream0_tc_0, 0, 0) != HAL_OK)
- 8000d30:	2200      	movs	r2, #0
- 8000d32:	2100      	movs	r1, #0
- 8000d34:	4852      	ldr	r0, [pc, #328]	@ (8000e80 <MX_MDMA_Init+0x1e8>)
- 8000d36:	f004 fd68 	bl	800580a <HAL_MDMA_ConfigPostRequestMask>
- 8000d3a:	4603      	mov	r3, r0
- 8000d3c:	2b00      	cmp	r3, #0
- 8000d3e:	d001      	beq.n	8000d44 <MX_MDMA_Init+0xac>
+ 8000d32:	2200      	movs	r2, #0
+ 8000d34:	2100      	movs	r1, #0
+ 8000d36:	4853      	ldr	r0, [pc, #332]	@ (8000e84 <MX_MDMA_Init+0x1ec>)
+ 8000d38:	f004 fd67 	bl	800580a <HAL_MDMA_ConfigPostRequestMask>
+ 8000d3c:	4603      	mov	r3, r0
+ 8000d3e:	2b00      	cmp	r3, #0
+ 8000d40:	d001      	beq.n	8000d46 <MX_MDMA_Init+0xae>
   {
     Error_Handler();
- 8000d40:	f000 f96a 	bl	8001018 <Error_Handler>
+ 8000d42:	f000 f969 	bl	8001018 <Error_Handler>
   }
 
   /* Initialize MDMA link node according to specified parameters */
   nodeConfig.Init.Request = MDMA_REQUEST_DMA1_Stream0_TC;
- 8000d44:	2300      	movs	r3, #0
- 8000d46:	60bb      	str	r3, [r7, #8]
+ 8000d46:	2300      	movs	r3, #0
+ 8000d48:	60bb      	str	r3, [r7, #8]
   nodeConfig.Init.TransferTriggerMode = MDMA_FULL_TRANSFER;
- 8000d48:	f04f 5340 	mov.w	r3, #805306368	@ 0x30000000
- 8000d4c:	60fb      	str	r3, [r7, #12]
+ 8000d4a:	f04f 5340 	mov.w	r3, #805306368	@ 0x30000000
+ 8000d4e:	60fb      	str	r3, [r7, #12]
   nodeConfig.Init.Priority = MDMA_PRIORITY_LOW;
- 8000d4e:	2300      	movs	r3, #0
- 8000d50:	613b      	str	r3, [r7, #16]
+ 8000d50:	2300      	movs	r3, #0
+ 8000d52:	613b      	str	r3, [r7, #16]
   nodeConfig.Init.Endianness = MDMA_LITTLE_ENDIANNESS_PRESERVE;
- 8000d52:	2300      	movs	r3, #0
- 8000d54:	617b      	str	r3, [r7, #20]
+ 8000d54:	2300      	movs	r3, #0
+ 8000d56:	617b      	str	r3, [r7, #20]
   nodeConfig.Init.SourceInc = MDMA_SRC_INC_HALFWORD;
- 8000d56:	f44f 7381 	mov.w	r3, #258	@ 0x102
- 8000d5a:	61bb      	str	r3, [r7, #24]
+ 8000d58:	f44f 7381 	mov.w	r3, #258	@ 0x102
+ 8000d5c:	61bb      	str	r3, [r7, #24]
   nodeConfig.Init.DestinationInc = MDMA_DEST_INC_HALFWORD;
- 8000d5c:	f44f 6381 	mov.w	r3, #1032	@ 0x408
- 8000d60:	61fb      	str	r3, [r7, #28]
-  nodeConfig.Init.SourceDataSize = MDMA_SRC_DATASIZE_BYTE;
- 8000d62:	2300      	movs	r3, #0
- 8000d64:	623b      	str	r3, [r7, #32]
-  nodeConfig.Init.DestDataSize = MDMA_DEST_DATASIZE_BYTE;
- 8000d66:	2300      	movs	r3, #0
- 8000d68:	627b      	str	r3, [r7, #36]	@ 0x24
+ 8000d5e:	f44f 6381 	mov.w	r3, #1032	@ 0x408
+ 8000d62:	61fb      	str	r3, [r7, #28]
+  nodeConfig.Init.SourceDataSize = MDMA_SRC_DATASIZE_HALFWORD;
+ 8000d64:	2310      	movs	r3, #16
+ 8000d66:	623b      	str	r3, [r7, #32]
+  nodeConfig.Init.DestDataSize = MDMA_DEST_DATASIZE_HALFWORD;
+ 8000d68:	2340      	movs	r3, #64	@ 0x40
+ 8000d6a:	627b      	str	r3, [r7, #36]	@ 0x24
   nodeConfig.Init.DataAlignment = MDMA_DATAALIGN_RIGHT;
- 8000d6a:	2300      	movs	r3, #0
- 8000d6c:	62bb      	str	r3, [r7, #40]	@ 0x28
+ 8000d6c:	2300      	movs	r3, #0
+ 8000d6e:	62bb      	str	r3, [r7, #40]	@ 0x28
   nodeConfig.Init.BufferTransferLength = 512;
- 8000d6e:	f44f 7300 	mov.w	r3, #512	@ 0x200
- 8000d72:	62fb      	str	r3, [r7, #44]	@ 0x2c
+ 8000d70:	f44f 7300 	mov.w	r3, #512	@ 0x200
+ 8000d74:	62fb      	str	r3, [r7, #44]	@ 0x2c
   nodeConfig.Init.SourceBurst = MDMA_SOURCE_BURST_8BEATS;
- 8000d74:	f44f 5340 	mov.w	r3, #12288	@ 0x3000
- 8000d78:	633b      	str	r3, [r7, #48]	@ 0x30
+ 8000d76:	f44f 5340 	mov.w	r3, #12288	@ 0x3000
+ 8000d7a:	633b      	str	r3, [r7, #48]	@ 0x30
   nodeConfig.Init.DestBurst = MDMA_DEST_BURST_8BEATS;
- 8000d7a:	f44f 33c0 	mov.w	r3, #98304	@ 0x18000
- 8000d7e:	637b      	str	r3, [r7, #52]	@ 0x34
+ 8000d7c:	f44f 33c0 	mov.w	r3, #98304	@ 0x18000
+ 8000d80:	637b      	str	r3, [r7, #52]	@ 0x34
   nodeConfig.Init.SourceBlockAddressOffset = 2;
- 8000d80:	2302      	movs	r3, #2
- 8000d82:	63bb      	str	r3, [r7, #56]	@ 0x38
+ 8000d82:	2302      	movs	r3, #2
+ 8000d84:	63bb      	str	r3, [r7, #56]	@ 0x38
   nodeConfig.Init.DestBlockAddressOffset = 0;
- 8000d84:	2300      	movs	r3, #0
- 8000d86:	63fb      	str	r3, [r7, #60]	@ 0x3c
+ 8000d86:	2300      	movs	r3, #0
+ 8000d88:	63fb      	str	r3, [r7, #60]	@ 0x3c
   nodeConfig.PostRequestMaskAddress = 0;
- 8000d88:	2300      	movs	r3, #0
- 8000d8a:	653b      	str	r3, [r7, #80]	@ 0x50
+ 8000d8a:	2300      	movs	r3, #0
+ 8000d8c:	653b      	str	r3, [r7, #80]	@ 0x50
   nodeConfig.PostRequestMaskData = 0;
- 8000d8c:	2300      	movs	r3, #0
- 8000d8e:	657b      	str	r3, [r7, #84]	@ 0x54
+ 8000d8e:	2300      	movs	r3, #0
+ 8000d90:	657b      	str	r3, [r7, #84]	@ 0x54
   nodeConfig.SrcAddress = (uint32_t)&adc_buf[0];
- 8000d90:	4b3d      	ldr	r3, [pc, #244]	@ (8000e88 <MX_MDMA_Init+0x1f0>)
- 8000d92:	643b      	str	r3, [r7, #64]	@ 0x40
+ 8000d92:	4b3e      	ldr	r3, [pc, #248]	@ (8000e8c <MX_MDMA_Init+0x1f4>)
+ 8000d94:	643b      	str	r3, [r7, #64]	@ 0x40
   nodeConfig.DstAddress = (uint32_t)&ch6_buf;
- 8000d94:	4b3d      	ldr	r3, [pc, #244]	@ (8000e8c <MX_MDMA_Init+0x1f4>)
- 8000d96:	647b      	str	r3, [r7, #68]	@ 0x44
+ 8000d96:	4b3e      	ldr	r3, [pc, #248]	@ (8000e90 <MX_MDMA_Init+0x1f8>)
+ 8000d98:	647b      	str	r3, [r7, #68]	@ 0x44
   nodeConfig.BlockDataLength = 2;
- 8000d98:	2302      	movs	r3, #2
- 8000d9a:	64bb      	str	r3, [r7, #72]	@ 0x48
+ 8000d9a:	2302      	movs	r3, #2
+ 8000d9c:	64bb      	str	r3, [r7, #72]	@ 0x48
   nodeConfig.BlockCount = 512;
- 8000d9c:	f44f 7300 	mov.w	r3, #512	@ 0x200
- 8000da0:	64fb      	str	r3, [r7, #76]	@ 0x4c
+ 8000d9e:	f44f 7300 	mov.w	r3, #512	@ 0x200
+ 8000da2:	64fb      	str	r3, [r7, #76]	@ 0x4c
   if (HAL_MDMA_LinkedList_CreateNode(&node_mdma_channel0_dma1_stream0_tc_1, &nodeConfig) != HAL_OK)
- 8000da2:	f107 0308 	add.w	r3, r7, #8
- 8000da6:	4619      	mov	r1, r3
- 8000da8:	4839      	ldr	r0, [pc, #228]	@ (8000e90 <MX_MDMA_Init+0x1f8>)
- 8000daa:	f004 fd80 	bl	80058ae <HAL_MDMA_LinkedList_CreateNode>
- 8000dae:	4603      	mov	r3, r0
- 8000db0:	2b00      	cmp	r3, #0
- 8000db2:	d001      	beq.n	8000db8 <MX_MDMA_Init+0x120>
+ 8000da4:	f107 0308 	add.w	r3, r7, #8
+ 8000da8:	4619      	mov	r1, r3
+ 8000daa:	483a      	ldr	r0, [pc, #232]	@ (8000e94 <MX_MDMA_Init+0x1fc>)
+ 8000dac:	f004 fd7f 	bl	80058ae <HAL_MDMA_LinkedList_CreateNode>
+ 8000db0:	4603      	mov	r3, r0
+ 8000db2:	2b00      	cmp	r3, #0
+ 8000db4:	d001      	beq.n	8000dba <MX_MDMA_Init+0x122>
   {
     Error_Handler();
- 8000db4:	f000 f930 	bl	8001018 <Error_Handler>
+ 8000db6:	f000 f92f 	bl	8001018 <Error_Handler>
   /* USER CODE BEGIN mdma_channel0_dma1_stream0_tc_1 */
 
   /* USER CODE END mdma_channel0_dma1_stream0_tc_1 */
 
   /* Connect a node to the linked list */
   if (HAL_MDMA_LinkedList_AddNode(&hmdma_mdma_channel0_dma1_stream0_tc_0, &node_mdma_channel0_dma1_stream0_tc_1, 0) != HAL_OK)
- 8000db8:	2200      	movs	r2, #0
- 8000dba:	4935      	ldr	r1, [pc, #212]	@ (8000e90 <MX_MDMA_Init+0x1f8>)
- 8000dbc:	4830      	ldr	r0, [pc, #192]	@ (8000e80 <MX_MDMA_Init+0x1e8>)
- 8000dbe:	f004 fe52 	bl	8005a66 <HAL_MDMA_LinkedList_AddNode>
- 8000dc2:	4603      	mov	r3, r0
- 8000dc4:	2b00      	cmp	r3, #0
- 8000dc6:	d001      	beq.n	8000dcc <MX_MDMA_Init+0x134>
+ 8000dba:	2200      	movs	r2, #0
+ 8000dbc:	4935      	ldr	r1, [pc, #212]	@ (8000e94 <MX_MDMA_Init+0x1fc>)
+ 8000dbe:	4831      	ldr	r0, [pc, #196]	@ (8000e84 <MX_MDMA_Init+0x1ec>)
+ 8000dc0:	f004 fe51 	bl	8005a66 <HAL_MDMA_LinkedList_AddNode>
+ 8000dc4:	4603      	mov	r3, r0
+ 8000dc6:	2b00      	cmp	r3, #0
+ 8000dc8:	d001      	beq.n	8000dce <MX_MDMA_Init+0x136>
   {
     Error_Handler();
- 8000dc8:	f000 f926 	bl	8001018 <Error_Handler>
+ 8000dca:	f000 f925 	bl	8001018 <Error_Handler>
   }
 
   /* Initialize MDMA link node according to specified parameters */
   nodeConfig.Init.Request = MDMA_REQUEST_DMA1_Stream0_TC;
- 8000dcc:	2300      	movs	r3, #0
- 8000dce:	60bb      	str	r3, [r7, #8]
+ 8000dce:	2300      	movs	r3, #0
+ 8000dd0:	60bb      	str	r3, [r7, #8]
   nodeConfig.Init.TransferTriggerMode = MDMA_FULL_TRANSFER;
- 8000dd0:	f04f 5340 	mov.w	r3, #805306368	@ 0x30000000
- 8000dd4:	60fb      	str	r3, [r7, #12]
+ 8000dd2:	f04f 5340 	mov.w	r3, #805306368	@ 0x30000000
+ 8000dd6:	60fb      	str	r3, [r7, #12]
   nodeConfig.Init.Priority = MDMA_PRIORITY_LOW;
- 8000dd6:	2300      	movs	r3, #0
- 8000dd8:	613b      	str	r3, [r7, #16]
+ 8000dd8:	2300      	movs	r3, #0
+ 8000dda:	613b      	str	r3, [r7, #16]
   nodeConfig.Init.Endianness = MDMA_LITTLE_ENDIANNESS_PRESERVE;
- 8000dda:	2300      	movs	r3, #0
- 8000ddc:	617b      	str	r3, [r7, #20]
+ 8000ddc:	2300      	movs	r3, #0
+ 8000dde:	617b      	str	r3, [r7, #20]
   nodeConfig.Init.SourceInc = MDMA_SRC_INC_HALFWORD;
- 8000dde:	f44f 7381 	mov.w	r3, #258	@ 0x102
- 8000de2:	61bb      	str	r3, [r7, #24]
+ 8000de0:	f44f 7381 	mov.w	r3, #258	@ 0x102
+ 8000de4:	61bb      	str	r3, [r7, #24]
   nodeConfig.Init.DestinationInc = MDMA_DEST_INC_HALFWORD;
- 8000de4:	f44f 6381 	mov.w	r3, #1032	@ 0x408
- 8000de8:	61fb      	str	r3, [r7, #28]
-  nodeConfig.Init.SourceDataSize = MDMA_SRC_DATASIZE_BYTE;
- 8000dea:	2300      	movs	r3, #0
- 8000dec:	623b      	str	r3, [r7, #32]
-  nodeConfig.Init.DestDataSize = MDMA_DEST_DATASIZE_BYTE;
- 8000dee:	2300      	movs	r3, #0
- 8000df0:	627b      	str	r3, [r7, #36]	@ 0x24
+ 8000de6:	f44f 6381 	mov.w	r3, #1032	@ 0x408
+ 8000dea:	61fb      	str	r3, [r7, #28]
+  nodeConfig.Init.SourceDataSize = MDMA_SRC_DATASIZE_HALFWORD;
+ 8000dec:	2310      	movs	r3, #16
+ 8000dee:	623b      	str	r3, [r7, #32]
+  nodeConfig.Init.DestDataSize = MDMA_DEST_DATASIZE_HALFWORD;
+ 8000df0:	2340      	movs	r3, #64	@ 0x40
+ 8000df2:	627b      	str	r3, [r7, #36]	@ 0x24
   nodeConfig.Init.DataAlignment = MDMA_DATAALIGN_RIGHT;
- 8000df2:	2300      	movs	r3, #0
- 8000df4:	62bb      	str	r3, [r7, #40]	@ 0x28
+ 8000df4:	2300      	movs	r3, #0
+ 8000df6:	62bb      	str	r3, [r7, #40]	@ 0x28
   nodeConfig.Init.BufferTransferLength = 512;
- 8000df6:	f44f 7300 	mov.w	r3, #512	@ 0x200
- 8000dfa:	62fb      	str	r3, [r7, #44]	@ 0x2c
+ 8000df8:	f44f 7300 	mov.w	r3, #512	@ 0x200
+ 8000dfc:	62fb      	str	r3, [r7, #44]	@ 0x2c
   nodeConfig.Init.SourceBurst = MDMA_SOURCE_BURST_8BEATS;
- 8000dfc:	f44f 5340 	mov.w	r3, #12288	@ 0x3000
- 8000e00:	633b      	str	r3, [r7, #48]	@ 0x30
-  nodeConfig.Init.DestBurst = MDMA_DEST_BURST_SINGLE;
- 8000e02:	2300      	movs	r3, #0
- 8000e04:	637b      	str	r3, [r7, #52]	@ 0x34
+ 8000dfe:	f44f 5340 	mov.w	r3, #12288	@ 0x3000
+ 8000e02:	633b      	str	r3, [r7, #48]	@ 0x30
+  nodeConfig.Init.DestBurst = MDMA_DEST_BURST_8BEATS;
+ 8000e04:	f44f 33c0 	mov.w	r3, #98304	@ 0x18000
+ 8000e08:	637b      	str	r3, [r7, #52]	@ 0x34
   nodeConfig.Init.SourceBlockAddressOffset = 2;
- 8000e06:	2302      	movs	r3, #2
- 8000e08:	63bb      	str	r3, [r7, #56]	@ 0x38
+ 8000e0a:	2302      	movs	r3, #2
+ 8000e0c:	63bb      	str	r3, [r7, #56]	@ 0x38
   nodeConfig.Init.DestBlockAddressOffset = 0;
- 8000e0a:	2300      	movs	r3, #0
- 8000e0c:	63fb      	str	r3, [r7, #60]	@ 0x3c
-  nodeConfig.PostRequestMaskAddress = 0;
  8000e0e:	2300      	movs	r3, #0
- 8000e10:	653b      	str	r3, [r7, #80]	@ 0x50
-  nodeConfig.PostRequestMaskData = 0;
+ 8000e10:	63fb      	str	r3, [r7, #60]	@ 0x3c
+  nodeConfig.PostRequestMaskAddress = 0;
  8000e12:	2300      	movs	r3, #0
- 8000e14:	657b      	str	r3, [r7, #84]	@ 0x54
-  nodeConfig.SrcAddress = (uint32_t)&adc_buf[1];
- 8000e16:	4b1f      	ldr	r3, [pc, #124]	@ (8000e94 <MX_MDMA_Init+0x1fc>)
- 8000e18:	643b      	str	r3, [r7, #64]	@ 0x40
+ 8000e14:	653b      	str	r3, [r7, #80]	@ 0x50
+  nodeConfig.PostRequestMaskData = 0;
+ 8000e16:	2300      	movs	r3, #0
+ 8000e18:	657b      	str	r3, [r7, #84]	@ 0x54
+  nodeConfig.SrcAddress = (uint32_t)&adc_buf[0];
+ 8000e1a:	4b1c      	ldr	r3, [pc, #112]	@ (8000e8c <MX_MDMA_Init+0x1f4>)
+ 8000e1c:	643b      	str	r3, [r7, #64]	@ 0x40
   nodeConfig.DstAddress = (uint32_t)&ch5_buf;
- 8000e1a:	4b1f      	ldr	r3, [pc, #124]	@ (8000e98 <MX_MDMA_Init+0x200>)
- 8000e1c:	647b      	str	r3, [r7, #68]	@ 0x44
+ 8000e1e:	4b1e      	ldr	r3, [pc, #120]	@ (8000e98 <MX_MDMA_Init+0x200>)
+ 8000e20:	647b      	str	r3, [r7, #68]	@ 0x44
   nodeConfig.BlockDataLength = 2;
- 8000e1e:	2302      	movs	r3, #2
- 8000e20:	64bb      	str	r3, [r7, #72]	@ 0x48
+ 8000e22:	2302      	movs	r3, #2
+ 8000e24:	64bb      	str	r3, [r7, #72]	@ 0x48
   nodeConfig.BlockCount = 512;
- 8000e22:	f44f 7300 	mov.w	r3, #512	@ 0x200
- 8000e26:	64fb      	str	r3, [r7, #76]	@ 0x4c
+ 8000e26:	f44f 7300 	mov.w	r3, #512	@ 0x200
+ 8000e2a:	64fb      	str	r3, [r7, #76]	@ 0x4c
   if (HAL_MDMA_LinkedList_CreateNode(&node_mdma_channel0_dma1_stream0_tc_2, &nodeConfig) != HAL_OK)
- 8000e28:	f107 0308 	add.w	r3, r7, #8
- 8000e2c:	4619      	mov	r1, r3
- 8000e2e:	481b      	ldr	r0, [pc, #108]	@ (8000e9c <MX_MDMA_Init+0x204>)
- 8000e30:	f004 fd3d 	bl	80058ae <HAL_MDMA_LinkedList_CreateNode>
- 8000e34:	4603      	mov	r3, r0
- 8000e36:	2b00      	cmp	r3, #0
- 8000e38:	d001      	beq.n	8000e3e <MX_MDMA_Init+0x1a6>
+ 8000e2c:	f107 0308 	add.w	r3, r7, #8
+ 8000e30:	4619      	mov	r1, r3
+ 8000e32:	481a      	ldr	r0, [pc, #104]	@ (8000e9c <MX_MDMA_Init+0x204>)
+ 8000e34:	f004 fd3b 	bl	80058ae <HAL_MDMA_LinkedList_CreateNode>
+ 8000e38:	4603      	mov	r3, r0
+ 8000e3a:	2b00      	cmp	r3, #0
+ 8000e3c:	d001      	beq.n	8000e42 <MX_MDMA_Init+0x1aa>
   {
     Error_Handler();
- 8000e3a:	f000 f8ed 	bl	8001018 <Error_Handler>
+ 8000e3e:	f000 f8eb 	bl	8001018 <Error_Handler>
   /* USER CODE BEGIN mdma_channel0_dma1_stream0_tc_2 */
 
   /* USER CODE END mdma_channel0_dma1_stream0_tc_2 */
 
   /* Connect a node to the linked list */
   if (HAL_MDMA_LinkedList_AddNode(&hmdma_mdma_channel0_dma1_stream0_tc_0, &node_mdma_channel0_dma1_stream0_tc_2, 0) != HAL_OK)
- 8000e3e:	2200      	movs	r2, #0
- 8000e40:	4916      	ldr	r1, [pc, #88]	@ (8000e9c <MX_MDMA_Init+0x204>)
- 8000e42:	480f      	ldr	r0, [pc, #60]	@ (8000e80 <MX_MDMA_Init+0x1e8>)
- 8000e44:	f004 fe0f 	bl	8005a66 <HAL_MDMA_LinkedList_AddNode>
- 8000e48:	4603      	mov	r3, r0
- 8000e4a:	2b00      	cmp	r3, #0
- 8000e4c:	d001      	beq.n	8000e52 <MX_MDMA_Init+0x1ba>
+ 8000e42:	2200      	movs	r2, #0
+ 8000e44:	4915      	ldr	r1, [pc, #84]	@ (8000e9c <MX_MDMA_Init+0x204>)
+ 8000e46:	480f      	ldr	r0, [pc, #60]	@ (8000e84 <MX_MDMA_Init+0x1ec>)
+ 8000e48:	f004 fe0d 	bl	8005a66 <HAL_MDMA_LinkedList_AddNode>
+ 8000e4c:	4603      	mov	r3, r0
+ 8000e4e:	2b00      	cmp	r3, #0
+ 8000e50:	d001      	beq.n	8000e56 <MX_MDMA_Init+0x1be>
   {
     Error_Handler();
- 8000e4e:	f000 f8e3 	bl	8001018 <Error_Handler>
+ 8000e52:	f000 f8e1 	bl	8001018 <Error_Handler>
   }
 
   /* Make the linked list circular by connecting the last node to the first */
   if (HAL_MDMA_LinkedList_EnableCircularMode(&hmdma_mdma_channel0_dma1_stream0_tc_0) != HAL_OK)
- 8000e52:	480b      	ldr	r0, [pc, #44]	@ (8000e80 <MX_MDMA_Init+0x1e8>)
- 8000e54:	f004 fecb 	bl	8005bee <HAL_MDMA_LinkedList_EnableCircularMode>
- 8000e58:	4603      	mov	r3, r0
- 8000e5a:	2b00      	cmp	r3, #0
- 8000e5c:	d001      	beq.n	8000e62 <MX_MDMA_Init+0x1ca>
+ 8000e56:	480b      	ldr	r0, [pc, #44]	@ (8000e84 <MX_MDMA_Init+0x1ec>)
+ 8000e58:	f004 fec9 	bl	8005bee <HAL_MDMA_LinkedList_EnableCircularMode>
+ 8000e5c:	4603      	mov	r3, r0
+ 8000e5e:	2b00      	cmp	r3, #0
+ 8000e60:	d001      	beq.n	8000e66 <MX_MDMA_Init+0x1ce>
   {
     Error_Handler();
- 8000e5e:	f000 f8db 	bl	8001018 <Error_Handler>
+ 8000e62:	f000 f8d9 	bl	8001018 <Error_Handler>
   }
 
   /* MDMA interrupt initialization */
   /* MDMA_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(MDMA_IRQn, 0, 0);
- 8000e62:	2200      	movs	r2, #0
- 8000e64:	2100      	movs	r1, #0
- 8000e66:	207a      	movs	r0, #122	@ 0x7a
- 8000e68:	f002 f92b 	bl	80030c2 <HAL_NVIC_SetPriority>
+ 8000e66:	2200      	movs	r2, #0
+ 8000e68:	2100      	movs	r1, #0
+ 8000e6a:	207a      	movs	r0, #122	@ 0x7a
+ 8000e6c:	f002 f929 	bl	80030c2 <HAL_NVIC_SetPriority>
   HAL_NVIC_EnableIRQ(MDMA_IRQn);
- 8000e6c:	207a      	movs	r0, #122	@ 0x7a
- 8000e6e:	f002 f942 	bl	80030f6 <HAL_NVIC_EnableIRQ>
+ 8000e70:	207a      	movs	r0, #122	@ 0x7a
+ 8000e72:	f002 f940 	bl	80030f6 <HAL_NVIC_EnableIRQ>
 
 }
- 8000e72:	bf00      	nop
- 8000e74:	3758      	adds	r7, #88	@ 0x58
- 8000e76:	46bd      	mov	sp, r7
- 8000e78:	bd80      	pop	{r7, pc}
- 8000e7a:	bf00      	nop
- 8000e7c:	58024400 	.word	0x58024400
- 8000e80:	240001ac 	.word	0x240001ac
- 8000e84:	52000040 	.word	0x52000040
- 8000e88:	24000aa0 	.word	0x24000aa0
- 8000e8c:	24000680 	.word	0x24000680
- 8000e90:	24000218 	.word	0x24000218
- 8000e94:	24000aa2 	.word	0x24000aa2
+ 8000e76:	bf00      	nop
+ 8000e78:	3758      	adds	r7, #88	@ 0x58
+ 8000e7a:	46bd      	mov	sp, r7
+ 8000e7c:	bd80      	pop	{r7, pc}
+ 8000e7e:	bf00      	nop
+ 8000e80:	58024400 	.word	0x58024400
+ 8000e84:	240001ac 	.word	0x240001ac
+ 8000e88:	52000040 	.word	0x52000040
+ 8000e8c:	24000aa0 	.word	0x24000aa0
+ 8000e90:	24000680 	.word	0x24000680
+ 8000e94:	24000218 	.word	0x24000218
  8000e98:	24000280 	.word	0x24000280
  8000e9c:	24000240 	.word	0x24000240
 

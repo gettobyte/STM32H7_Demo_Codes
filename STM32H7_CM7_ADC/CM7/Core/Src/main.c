@@ -121,13 +121,6 @@ volatile uint16_t ch6_avg_full = 0;
 volatile uint8_t  half_ready = 0;     // 1 when half result updated
 volatile uint8_t  full_ready = 0;     // 1 when full result updated
 
-
-
-
-
-
-
-
 // Helper: average one interleaved block: [CH6,CH5,CH6,CH5,...]
 // base  : pointer to first sample in the block
 // count : number of half-words in the block (must be even)
@@ -159,12 +152,8 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) {
 
 	  if (hadc->Instance == ADC1) {
 
-
 		      ch_pair_full_ready = 1;   // full 512 samples/channel now ready
-
 		      full_ready = 1;
-
-
 	    }
 
 }
@@ -172,7 +161,6 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) {
 void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef* hadc) {
 
 	  if (hadc->Instance == ADC1) {
-
 
 		    ch_pair_half_ready = 1;   // you now have the first 256 samples/channel
 		 		     half_ready = 1;
@@ -513,12 +501,12 @@ static void MX_MDMA_Init(void)
   hmdma_mdma_channel0_dma1_stream0_tc_0.Init.Endianness = MDMA_LITTLE_ENDIANNESS_PRESERVE;
   hmdma_mdma_channel0_dma1_stream0_tc_0.Init.SourceInc = MDMA_SRC_INC_HALFWORD;
   hmdma_mdma_channel0_dma1_stream0_tc_0.Init.DestinationInc = MDMA_DEST_INC_HALFWORD;
-  hmdma_mdma_channel0_dma1_stream0_tc_0.Init.SourceDataSize = MDMA_SRC_DATASIZE_BYTE;
-  hmdma_mdma_channel0_dma1_stream0_tc_0.Init.DestDataSize = MDMA_DEST_DATASIZE_BYTE;
+  hmdma_mdma_channel0_dma1_stream0_tc_0.Init.SourceDataSize = MDMA_SRC_DATASIZE_HALFWORD;
+  hmdma_mdma_channel0_dma1_stream0_tc_0.Init.DestDataSize = MDMA_DEST_DATASIZE_HALFWORD;
   hmdma_mdma_channel0_dma1_stream0_tc_0.Init.DataAlignment = MDMA_DATAALIGN_RIGHT;
   hmdma_mdma_channel0_dma1_stream0_tc_0.Init.BufferTransferLength = 512;
   hmdma_mdma_channel0_dma1_stream0_tc_0.Init.SourceBurst = MDMA_SOURCE_BURST_8BEATS;
-  hmdma_mdma_channel0_dma1_stream0_tc_0.Init.DestBurst = MDMA_DEST_BURST_SINGLE;
+  hmdma_mdma_channel0_dma1_stream0_tc_0.Init.DestBurst = MDMA_DEST_BURST_8BEATS;
   hmdma_mdma_channel0_dma1_stream0_tc_0.Init.SourceBlockAddressOffset = 2;
   hmdma_mdma_channel0_dma1_stream0_tc_0.Init.DestBlockAddressOffset = 0;
   if (HAL_MDMA_Init(&hmdma_mdma_channel0_dma1_stream0_tc_0) != HAL_OK)
@@ -539,8 +527,8 @@ static void MX_MDMA_Init(void)
   nodeConfig.Init.Endianness = MDMA_LITTLE_ENDIANNESS_PRESERVE;
   nodeConfig.Init.SourceInc = MDMA_SRC_INC_HALFWORD;
   nodeConfig.Init.DestinationInc = MDMA_DEST_INC_HALFWORD;
-  nodeConfig.Init.SourceDataSize = MDMA_SRC_DATASIZE_BYTE;
-  nodeConfig.Init.DestDataSize = MDMA_DEST_DATASIZE_BYTE;
+  nodeConfig.Init.SourceDataSize = MDMA_SRC_DATASIZE_HALFWORD;
+  nodeConfig.Init.DestDataSize = MDMA_DEST_DATASIZE_HALFWORD;
   nodeConfig.Init.DataAlignment = MDMA_DATAALIGN_RIGHT;
   nodeConfig.Init.BufferTransferLength = 512;
   nodeConfig.Init.SourceBurst = MDMA_SOURCE_BURST_8BEATS;
@@ -574,17 +562,17 @@ static void MX_MDMA_Init(void)
   nodeConfig.Init.Endianness = MDMA_LITTLE_ENDIANNESS_PRESERVE;
   nodeConfig.Init.SourceInc = MDMA_SRC_INC_HALFWORD;
   nodeConfig.Init.DestinationInc = MDMA_DEST_INC_HALFWORD;
-  nodeConfig.Init.SourceDataSize = MDMA_SRC_DATASIZE_BYTE;
-  nodeConfig.Init.DestDataSize = MDMA_DEST_DATASIZE_BYTE;
+  nodeConfig.Init.SourceDataSize = MDMA_SRC_DATASIZE_HALFWORD;
+  nodeConfig.Init.DestDataSize = MDMA_DEST_DATASIZE_HALFWORD;
   nodeConfig.Init.DataAlignment = MDMA_DATAALIGN_RIGHT;
   nodeConfig.Init.BufferTransferLength = 512;
   nodeConfig.Init.SourceBurst = MDMA_SOURCE_BURST_8BEATS;
-  nodeConfig.Init.DestBurst = MDMA_DEST_BURST_SINGLE;
+  nodeConfig.Init.DestBurst = MDMA_DEST_BURST_8BEATS;
   nodeConfig.Init.SourceBlockAddressOffset = 2;
   nodeConfig.Init.DestBlockAddressOffset = 0;
   nodeConfig.PostRequestMaskAddress = 0;
   nodeConfig.PostRequestMaskData = 0;
-  nodeConfig.SrcAddress = (uint32_t)&adc_buf[1];
+  nodeConfig.SrcAddress = (uint32_t)&adc_buf[0];
   nodeConfig.DstAddress = (uint32_t)&ch5_buf;
   nodeConfig.BlockDataLength = 2;
   nodeConfig.BlockCount = 512;
