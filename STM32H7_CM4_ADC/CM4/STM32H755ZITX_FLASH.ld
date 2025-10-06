@@ -50,6 +50,7 @@ RAM (xrw)      : ORIGIN = 0x10000000, LENGTH = 288K
 /* Define output sections */
 SECTIONS
 {
+
   /* The startup code goes first into FLASH */
   .isr_vector :
   {

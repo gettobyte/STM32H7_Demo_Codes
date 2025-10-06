@@ -57,18 +57,18 @@
 ADC_HandleTypeDef hadc2;
 DMA_HandleTypeDef hdma_adc2;
 
-MDMA_HandleTypeDef hmdma_mdma_channel0_dma1_stream0_tc_0;
-MDMA_LinkNodeTypeDef node_mdma_channel0_dma1_stream0_tc_1;
-MDMA_LinkNodeTypeDef node_mdma_channel0_dma1_stream0_tc_2;
+__attribute__((aligned(32))) MDMA_HandleTypeDef hmdma_mdma_channel0_dma1_stream0_tc_0;
+__attribute__((aligned(32))) MDMA_LinkNodeTypeDef node_mdma_channel0_dma1_stream0_tc_1;
+__attribute__((aligned(32))) MDMA_LinkNodeTypeDef node_mdma_channel0_dma1_stream0_tc_2;
 /* USER CODE BEGIN PV */
 
-__attribute__((aligned(32))) uint16_t adc_buf[1024] = {0};
+__attribute__(( aligned(32))) uint16_t adc_buf[1024] = {0};
 
 
-__attribute__((aligned(32))) volatile uint16_t ch5_data[CH_SAMPLES];
-__attribute__((aligned(32))) volatile uint16_t ch6_data[CH_SAMPLES];
+__attribute__((aligned(32)))volatile uint16_t ch5_buf[CH_SAMPLES];
+__attribute__(( aligned(32)))volatile uint16_t ch6_buf[CH_SAMPLES];
 
-__attribute__((aligned(32))) volatile uint16_t ch5_data_mdma[CH_SAMPLES];
+__attribute__(( aligned(32))) volatile uint16_t ch5_data_mdma[CH_SAMPLES];
 __attribute__((aligned(32))) volatile uint16_t ch6_data_mdma[CH_SAMPLES];
 
 // Flags to know when data is ready
@@ -239,9 +239,9 @@ int main(void)
    }
 
    HAL_MDMA_Start_IT(&hmdma_mdma_channel0_dma1_stream0_tc_0,
-                     (uint32_t)&adc_buf[1],      // CH5 starts at odd index
-                     (uint32_t)&ch5_data[0],
-                     1,                           // BlockDataLength = 2 bytes (half-word)
+                     (uint32_t)&adc_buf[0],      // CH5 starts at odd index
+                     (uint32_t)&ch6_buf[0],
+                     2,                           // BlockDataLength = 2 bytes (half-word)
                      512);                        // BlockCount     = 512 elements
 
   /* USER CODE END 2 */
@@ -256,47 +256,18 @@ int main(void)
 
 	   if (ch_pair_half_ready)
 	   {
-	  // First half of the interleaved buffer: adc_buf[0 .. 511]
-		// -> 256 samples per channel into [0..255]
-//		deinterleave_block(&adc_buf[0], ADC_BUF_LEN/2u,
-//						   ch5_data, ch6_data, 0u);
 
 		avg_interleaved_block(&adc_buf[0], ADC_BUF_LEN/2,
-													   (uint16_t*)&ch5_avg_half, (uint16_t*)&ch6_avg_half);
-
-   ch_pair_half_ready = 0;
-   // ch5_data[0..255] and ch6_data[0..255] just filled
-   // e.g., compute quick stats on the first half
-		   }
+	       (uint16_t*)&ch5_avg_half, (uint16_t*)&ch6_avg_half);
+		ch_pair_half_ready = 0;
+	 }
 
 		   if (ch_pair_full_ready) {
-
-			   // Second half of the interleaved buffer: adc_buf[512 .. 1023]
-			 		      // -> 256 samples per channel into [256..511]
-//			 		      deinterleave_block(&adc_buf[ADC_BUF_LEN/2u], ADC_BUF_LEN/2u,
-//			 		                         ch5_data, ch6_data, CH_SAMPLES/2u);
-
-			 		     uint16_t a5 = 0, a6 = 0;
-						 avg_interleaved_block(&adc_buf[0],ADC_BUF_LEN/2, &a5, &a6);
-						 uint16_t b5 = 0, b6 = 0;
-						 avg_interleaved_block(&adc_buf[ADC_BUF_LEN/2], ADC_BUF_LEN/2, &b5, &b6);
-						 ch5_avg_full = (uint16_t)(((uint32_t)a5 + b5) / 2u);
-						 ch6_avg_full = (uint16_t)(((uint32_t)a6 + b6) / 2u);
-
 
 		       ch_pair_full_ready = 0;
 
 		   }
 
-
-
-
-
-	  add_result = sum(32,48);
-	  sub_result = diff(50, 25);
-	  mult_result = mult(20,10);
-
-	  HAL_Delay(1000);
   }
   /* USER CODE END 3 */
 }
@@ -323,7 +294,7 @@ static void MX_ADC2_Init(void)
   */
   hadc2.Instance = ADC2;
   hadc2.Init.ClockPrescaler = ADC_CLOCK_ASYNC_DIV2;
-  hadc2.Init.Resolution = ADC_RESOLUTION_12B;
+  hadc2.Init.Resolution = ADC_RESOLUTION_16B;
   hadc2.Init.ScanConvMode = ADC_SCAN_ENABLE;
   hadc2.Init.EOCSelection = ADC_EOC_SEQ_CONV;
   hadc2.Init.LowPowerAutoWait = DISABLE;
@@ -332,7 +303,7 @@ static void MX_ADC2_Init(void)
   hadc2.Init.DiscontinuousConvMode = DISABLE;
   hadc2.Init.ExternalTrigConv = ADC_SOFTWARE_START;
   hadc2.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
-  hadc2.Init.ConversionDataManagement = ADC_CONVERSIONDATA_DR;
+  hadc2.Init.ConversionDataManagement = ADC_CONVERSIONDATA_DMA_CIRCULAR;
   hadc2.Init.Overrun = ADC_OVR_DATA_PRESERVED;
   hadc2.Init.LeftBitShift = ADC_LEFTBITSHIFT_NONE;
   hadc2.Init.OversamplingMode = DISABLE;
@@ -405,7 +376,7 @@ static void MX_MDMA_Init(void)
   /* Configure MDMA request hmdma_mdma_channel0_dma1_stream0_tc_0 on MDMA_Channel0 */
   hmdma_mdma_channel0_dma1_stream0_tc_0.Instance = MDMA_Channel0;
   hmdma_mdma_channel0_dma1_stream0_tc_0.Init.Request = MDMA_REQUEST_DMA1_Stream0_TC;
-  hmdma_mdma_channel0_dma1_stream0_tc_0.Init.TransferTriggerMode = MDMA_BUFFER_TRANSFER;
+  hmdma_mdma_channel0_dma1_stream0_tc_0.Init.TransferTriggerMode = MDMA_FULL_TRANSFER;
   hmdma_mdma_channel0_dma1_stream0_tc_0.Init.Priority = MDMA_PRIORITY_LOW;
   hmdma_mdma_channel0_dma1_stream0_tc_0.Init.Endianness = MDMA_LITTLE_ENDIANNESS_PRESERVE;
   hmdma_mdma_channel0_dma1_stream0_tc_0.Init.SourceInc = MDMA_SRC_INC_HALFWORD;
@@ -414,8 +385,8 @@ static void MX_MDMA_Init(void)
   hmdma_mdma_channel0_dma1_stream0_tc_0.Init.DestDataSize = MDMA_DEST_DATASIZE_HALFWORD;
   hmdma_mdma_channel0_dma1_stream0_tc_0.Init.DataAlignment = MDMA_DATAALIGN_RIGHT;
   hmdma_mdma_channel0_dma1_stream0_tc_0.Init.BufferTransferLength = 512;
-  hmdma_mdma_channel0_dma1_stream0_tc_0.Init.SourceBurst = MDMA_SOURCE_BURST_8BEATS;
-  hmdma_mdma_channel0_dma1_stream0_tc_0.Init.DestBurst = MDMA_DEST_BURST_16BEATS;
+  hmdma_mdma_channel0_dma1_stream0_tc_0.Init.SourceBurst = MDMA_SOURCE_BURST_SINGLE;
+  hmdma_mdma_channel0_dma1_stream0_tc_0.Init.DestBurst = MDMA_SOURCE_BURST_SINGLE;
   hmdma_mdma_channel0_dma1_stream0_tc_0.Init.SourceBlockAddressOffset = 2;
   hmdma_mdma_channel0_dma1_stream0_tc_0.Init.DestBlockAddressOffset = 0;
   if (HAL_MDMA_Init(&hmdma_mdma_channel0_dma1_stream0_tc_0) != HAL_OK)
@@ -431,7 +402,7 @@ static void MX_MDMA_Init(void)
 
   /* Initialize MDMA link node according to specified parameters */
   nodeConfig.Init.Request = MDMA_REQUEST_DMA1_Stream0_TC;
-  nodeConfig.Init.TransferTriggerMode = MDMA_BUFFER_TRANSFER;
+  nodeConfig.Init.TransferTriggerMode = MDMA_FULL_TRANSFER;
   nodeConfig.Init.Priority = MDMA_PRIORITY_LOW;
   nodeConfig.Init.Endianness = MDMA_LITTLE_ENDIANNESS_PRESERVE;
   nodeConfig.Init.SourceInc = MDMA_SRC_INC_HALFWORD;
@@ -440,15 +411,15 @@ static void MX_MDMA_Init(void)
   nodeConfig.Init.DestDataSize = MDMA_DEST_DATASIZE_HALFWORD;
   nodeConfig.Init.DataAlignment = MDMA_DATAALIGN_RIGHT;
   nodeConfig.Init.BufferTransferLength = 512;
-  nodeConfig.Init.SourceBurst = MDMA_SOURCE_BURST_8BEATS;
+  nodeConfig.Init.SourceBurst = MDMA_SOURCE_BURST_SINGLE;
   nodeConfig.Init.DestBurst = MDMA_DEST_BURST_8BEATS;
   nodeConfig.Init.SourceBlockAddressOffset = 2;
   nodeConfig.Init.DestBlockAddressOffset = 0;
   nodeConfig.PostRequestMaskAddress = 0;
   nodeConfig.PostRequestMaskData = 0;
-  nodeConfig.SrcAddress = (uint32_t)&adc_buf[1];
-  nodeConfig.DstAddress = (uint32_t)&ch5_data[0];
-  nodeConfig.BlockDataLength = 1;
+  nodeConfig.SrcAddress = (uint32_t)&adc_buf[0];
+  nodeConfig.DstAddress = (uint32_t)&ch6_buf;
+  nodeConfig.BlockDataLength = 2;
   nodeConfig.BlockCount = 512;
   if (HAL_MDMA_LinkedList_CreateNode(&node_mdma_channel0_dma1_stream0_tc_1, &nodeConfig) != HAL_OK)
   {
@@ -466,7 +437,7 @@ static void MX_MDMA_Init(void)
 
   /* Initialize MDMA link node according to specified parameters */
   nodeConfig.Init.Request = MDMA_REQUEST_DMA1_Stream0_TC;
-  nodeConfig.Init.TransferTriggerMode = MDMA_BUFFER_TRANSFER;
+  nodeConfig.Init.TransferTriggerMode = MDMA_FULL_TRANSFER;
   nodeConfig.Init.Priority = MDMA_PRIORITY_LOW;
   nodeConfig.Init.Endianness = MDMA_LITTLE_ENDIANNESS_PRESERVE;
   nodeConfig.Init.SourceInc = MDMA_SRC_INC_HALFWORD;
@@ -475,15 +446,15 @@ static void MX_MDMA_Init(void)
   nodeConfig.Init.DestDataSize = MDMA_DEST_DATASIZE_HALFWORD;
   nodeConfig.Init.DataAlignment = MDMA_DATAALIGN_RIGHT;
   nodeConfig.Init.BufferTransferLength = 512;
-  nodeConfig.Init.SourceBurst = MDMA_SOURCE_BURST_8BEATS;
-  nodeConfig.Init.DestBurst = MDMA_DEST_BURST_16BEATS;
+  nodeConfig.Init.SourceBurst = MDMA_SOURCE_BURST_SINGLE;
+  nodeConfig.Init.DestBurst = MDMA_DEST_BURST_8BEATS;
   nodeConfig.Init.SourceBlockAddressOffset = 2;
   nodeConfig.Init.DestBlockAddressOffset = 0;
   nodeConfig.PostRequestMaskAddress = 0;
   nodeConfig.PostRequestMaskData = 0;
-  nodeConfig.SrcAddress = (uint32_t)&adc_buf[0];
-  nodeConfig.DstAddress = (uint32_t)&ch6_data[0];
-  nodeConfig.BlockDataLength = 1;
+  nodeConfig.SrcAddress = (uint32_t)&adc_buf[1];
+  nodeConfig.DstAddress = (uint32_t)&ch5_buf;
+  nodeConfig.BlockDataLength = 2;
   nodeConfig.BlockCount = 512;
   if (HAL_MDMA_LinkedList_CreateNode(&node_mdma_channel0_dma1_stream0_tc_2, &nodeConfig) != HAL_OK)
   {

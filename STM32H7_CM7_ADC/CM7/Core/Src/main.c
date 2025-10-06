@@ -83,11 +83,11 @@ static void MX_ADC1_Init(void);
 #define ADC_BUF_LEN   1024u              // must be multiple of 4
 #define CH_SAMPLES    (ADC_BUF_LEN/2u)   // 512 samples *per channel*
 
-__attribute__((aligned(32))) volatile uint16_t ch5_buf[CH_SAMPLES];
-__attribute__((aligned(32))) volatile uint16_t ch6_buf[CH_SAMPLES];
+__attribute__((section(".RAM_CORTEXM7"), aligned(32)))  volatile uint16_t ch5_buf[CH_SAMPLES];
+__attribute__((section(".RAM_CORTEXM7"), aligned(32))) volatile uint16_t ch6_buf[CH_SAMPLES];
 
-__attribute__((aligned(32))) volatile uint16_t ch5_data_mdma[CH_SAMPLES];
-__attribute__((aligned(32))) volatile uint16_t ch6_data_mdma[CH_SAMPLES];
+__attribute__((section(".RAM_CORTEXM7"), aligned(32))) volatile uint16_t ch5_data_mdma[CH_SAMPLES];
+__attribute__((section(".RAM_CORTEXM7"), aligned(32))) volatile uint16_t ch6_data_mdma[CH_SAMPLES];
 
 // Flags to know when data is ready
 volatile uint8_t ch_pair_half_ready = 0;   // first 256 samples per channel
@@ -141,7 +141,7 @@ static inline void avg_interleaved_block(volatile  uint16_t *base, uint32_t coun
 
 
 /* Two-sample buffer in rank order: [0]=CH10(PC0), [1]=CH16(PA0) */
-__attribute__((aligned(32))) volatile uint16_t adc_buf[1024] = {0};
+__attribute__((section(".RAM_CORTEXM7"), aligned(32))) volatile uint16_t adc_buf[1024] = {0};
 static inline void ADC_ReadBuffer_Safely(void)
 {
     /* CM7 D-cache: invalidate before CPU reads the DMA-updated buffer */
@@ -572,7 +572,7 @@ static void MX_MDMA_Init(void)
   nodeConfig.Init.DestBlockAddressOffset = 0;
   nodeConfig.PostRequestMaskAddress = 0;
   nodeConfig.PostRequestMaskData = 0;
-  nodeConfig.SrcAddress = (uint32_t)&adc_buf[0];
+  nodeConfig.SrcAddress = (uint32_t)&adc_buf[1];
   nodeConfig.DstAddress = (uint32_t)&ch5_buf;
   nodeConfig.BlockDataLength = 2;
   nodeConfig.BlockCount = 512;
