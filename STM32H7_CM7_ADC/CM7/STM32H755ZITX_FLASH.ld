@@ -55,6 +55,16 @@ MEMORY
 /* Sections */
 SECTIONS
 {
+/* ---- D2 SRAM, NOLOAD (not initialized/cleared by startup) ---- */
+.ram_d2_noload (NOLOAD) :
+{
+  . = ALIGN(32);
+  *(.ram_d2_noload)
+  *(.ram_d2_noload.*)
+  . = ALIGN(32);
+} > RAM_D2
+
+
   /* The startup code into "FLASH" Rom type memory */
   .isr_vector :
   {
@@ -176,6 +186,8 @@ SECTIONS
     . = . + _Min_Stack_Size;
     . = ALIGN(8);
   } >RAM_D1
+  
+  
 
   /* Remove information from the compiler libraries */
   /DISCARD/ :

@@ -61,6 +61,9 @@ DMA_HandleTypeDef hdma_adc1;
 MDMA_HandleTypeDef hmdma_mdma_channel0_dma1_stream0_tc_0;
 MDMA_LinkNodeTypeDef node_mdma_channel0_dma1_stream0_tc_1;
 MDMA_LinkNodeTypeDef node_mdma_channel0_dma1_stream0_tc_2;
+MDMA_HandleTypeDef hmdma_mdma_channel1_sw_0;
+MDMA_LinkNodeTypeDef node_mdma_channel1_sw_1;
+MDMA_LinkNodeTypeDef node_mdma_channel1_sw_2;
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -78,16 +81,19 @@ static void MX_ADC1_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
+#define RAM_D2_NL  __attribute__((section(".ram_d2_noload"), aligned(32)))
+
+
 
 // Interleaved DMA buffer: [CH6,CH5, CH6,CH5, ...]
 #define ADC_BUF_LEN   1024u              // must be multiple of 4
 #define CH_SAMPLES    (ADC_BUF_LEN/2u)   // 512 samples *per channel*
 
-__attribute__((aligned(32)))  volatile uint16_t ch5_buf[CH_SAMPLES] = {0};
-__attribute__((aligned(32))) volatile uint16_t ch6_buf[CH_SAMPLES] = {0};
+RAM_D2_NL  volatile uint16_t ch5_buf[CH_SAMPLES] = {0};
+RAM_D2_NL volatile uint16_t ch6_buf[CH_SAMPLES];
 
-__attribute__((aligned(32))) volatile uint16_t ch5_data_mdma[CH_SAMPLES] = {0};
-__attribute__((aligned(32))) volatile uint16_t ch6_data_mdma[CH_SAMPLES] = {0};
+RAM_D2_NL volatile uint16_t ch5_data_mdma[CH_SAMPLES] = {0};
+RAM_D2_NL volatile uint16_t ch6_data_mdma[CH_SAMPLES] = {0};
 
 // Flags to know when data is ready
 volatile uint8_t ch_pair_half_ready = 0;   // first 256 samples per channel
@@ -142,7 +148,7 @@ static inline void avg_interleaved_block(volatile  uint16_t *base, uint32_t coun
 }
 
 /* Two-sample buffer in rank order: [0]=CH10(PC0), [1]=CH16(PA0) */
-__attribute__((aligned(32))) volatile uint16_t adc_buf[1024] = {0};
+RAM_D2_NL volatile uint16_t adc_buf[1024] = {0};
 static inline void ADC_ReadBuffer_Safely(void)
 {
     /* CM7 D-cache: invalidate before CPU reads the DMA-updated buffer */
@@ -156,6 +162,7 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) {
 
 	  if (hadc->Instance == ADC1) {
 
+		//  SCB_InvalidateDCache_by_Addr((uint32_t*)adc_buf, sizeof(adc_buf));
 		  ADC_DMA_Full_Flag += 1;
 		      ch_pair_full_ready = 1;   // full 512 samples/channel now ready
 		      full_ready = 1;
@@ -166,6 +173,8 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) {
 void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef* hadc) {
 
 	  if (hadc->Instance == ADC1) {
+
+		//  SCB_InvalidateDCache_by_Addr((uint32_t*)adc_buf, sizeof(adc_buf));
 
 		  ADC_DMA_Half_Flag += 1;
 		    ch_pair_half_ready = 1;   // you now have the first 256 samples/channel
@@ -276,11 +285,18 @@ Error_Handler();
       Error_Handler();
   }
 
-  HAL_MDMA_Start_IT(&hmdma_mdma_channel0_dma1_stream0_tc_0,
+  HAL_MDMA_Start_IT(&hmdma_mdma_channel1_sw_0,
                     (uint32_t)&adc_buf[0],      // CH6 starts at even index
                     (uint32_t)&ch6_buf[0],
                     2,                           // BlockDataLength = 2 bytes (half-word)
                     512);                        // BlockCount     = 512 elements
+
+
+//  HAL_MDMA_Start_IT(&hmdma_mdma_channel0_dma1_stream0_tc_0,
+//                    (uint32_t)&adc_buf[0],      // CH6 starts at even index
+//                    (uint32_t)&ch6_buf[0],
+//                    2,                           // BlockDataLength = 2 bytes (half-word)
+//                    512);                        // BlockCount     = 512 elements
 
 
  // HAL_MDMA_GenerateSWRequest(&hmdma_mdma_channel0_dma1_stream0_tc_0);  // <— should fire your MDMA IRQ
@@ -324,8 +340,8 @@ Error_Handler();
 
     /* USER CODE BEGIN 3 */
 
-
-
+	  HAL_MDMA_GenerateSWRequest(&hmdma_mdma_channel1_sw_0);
+	  HAL_Delay(1000);
 
 	   if (half_ready) {
 			  // First half: adc_buf[0 .. (ADC_BUF_LEN/2 - 1)]
@@ -510,6 +526,9 @@ static void MX_DMA_Init(void)
   *   hmdma_mdma_channel0_dma1_stream0_tc_0
   *   node_mdma_channel0_dma1_stream0_tc_1
   *   node_mdma_channel0_dma1_stream0_tc_2
+  *   hmdma_mdma_channel1_sw_0
+  *   node_mdma_channel1_sw_1
+  *   node_mdma_channel1_sw_2
   */
 static void MX_MDMA_Init(void)
 {
@@ -536,7 +555,6 @@ static void MX_MDMA_Init(void)
   hmdma_mdma_channel0_dma1_stream0_tc_0.Init.DestBurst = MDMA_DEST_BURST_SINGLE;
   hmdma_mdma_channel0_dma1_stream0_tc_0.Init.SourceBlockAddressOffset = 2;
   hmdma_mdma_channel0_dma1_stream0_tc_0.Init.DestBlockAddressOffset = 0;
-
 
   hmdma_mdma_channel0_dma1_stream0_tc_0.XferBlockCpltCallback =  HAL_MDMA_BlockCpltCallback;
   hmdma_mdma_channel0_dma1_stream0_tc_0.XferBufferCpltCallback =  HAL_MDMA_BufferCpltCallback;
@@ -570,7 +588,7 @@ static void MX_MDMA_Init(void)
   nodeConfig.PostRequestMaskAddress = 0;
   nodeConfig.PostRequestMaskData = 0;
   nodeConfig.SrcAddress = (uint32_t)&adc_buf[0];
-  nodeConfig.DstAddress = (uint32_t)&ch6_buf;
+  nodeConfig.DstAddress = (uint32_t)&ch6_buf[0];
   nodeConfig.BlockDataLength = 2;
   nodeConfig.BlockCount = 512;
   if (HAL_MDMA_LinkedList_CreateNode(&node_mdma_channel0_dma1_stream0_tc_1, &nodeConfig) != HAL_OK)
@@ -605,7 +623,7 @@ static void MX_MDMA_Init(void)
   nodeConfig.PostRequestMaskAddress = 0;
   nodeConfig.PostRequestMaskData = 0;
   nodeConfig.SrcAddress = (uint32_t)&adc_buf[1];
-  nodeConfig.DstAddress = (uint32_t)&ch5_buf;
+  nodeConfig.DstAddress = (uint32_t)&ch5_buf[0];
   nodeConfig.BlockDataLength = 2;
   nodeConfig.BlockCount = 512;
   if (HAL_MDMA_LinkedList_CreateNode(&node_mdma_channel0_dma1_stream0_tc_2, &nodeConfig) != HAL_OK)
@@ -624,6 +642,109 @@ static void MX_MDMA_Init(void)
 
   /* Make the linked list circular by connecting the last node to the first */
   if (HAL_MDMA_LinkedList_EnableCircularMode(&hmdma_mdma_channel0_dma1_stream0_tc_0) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /* Configure MDMA channel MDMA_Channel1 */
+  /* Configure MDMA request hmdma_mdma_channel1_sw_0 on MDMA_Channel1 */
+  hmdma_mdma_channel1_sw_0.Instance = MDMA_Channel1;
+  hmdma_mdma_channel1_sw_0.Init.Request = MDMA_REQUEST_SW;
+  hmdma_mdma_channel1_sw_0.Init.TransferTriggerMode = MDMA_BLOCK_TRANSFER;
+  hmdma_mdma_channel1_sw_0.Init.Priority = MDMA_PRIORITY_LOW;
+  hmdma_mdma_channel1_sw_0.Init.Endianness = MDMA_LITTLE_ENDIANNESS_PRESERVE;
+  hmdma_mdma_channel1_sw_0.Init.SourceInc = MDMA_SRC_INC_HALFWORD;
+  hmdma_mdma_channel1_sw_0.Init.DestinationInc = MDMA_DEST_INC_HALFWORD;
+  hmdma_mdma_channel1_sw_0.Init.SourceDataSize = MDMA_SRC_DATASIZE_HALFWORD;
+  hmdma_mdma_channel1_sw_0.Init.DestDataSize = MDMA_DEST_DATASIZE_HALFWORD;
+  hmdma_mdma_channel1_sw_0.Init.DataAlignment = MDMA_DATAALIGN_RIGHT;
+  hmdma_mdma_channel1_sw_0.Init.BufferTransferLength = 512;
+  hmdma_mdma_channel1_sw_0.Init.SourceBurst = MDMA_SOURCE_BURST_SINGLE;
+  hmdma_mdma_channel1_sw_0.Init.DestBurst = MDMA_DEST_BURST_SINGLE;
+  hmdma_mdma_channel1_sw_0.Init.SourceBlockAddressOffset = 0;
+  hmdma_mdma_channel1_sw_0.Init.DestBlockAddressOffset = 0;
+
+
+  hmdma_mdma_channel1_sw_0.XferBlockCpltCallback =  HAL_MDMA_BlockCpltCallback;
+  hmdma_mdma_channel1_sw_0.XferBufferCpltCallback =  HAL_MDMA_BufferCpltCallback;
+
+  if (HAL_MDMA_Init(&hmdma_mdma_channel1_sw_0) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /* Initialize MDMA link node according to specified parameters */
+  nodeConfig.Init.Request = MDMA_REQUEST_SW;
+  nodeConfig.Init.TransferTriggerMode = MDMA_BUFFER_TRANSFER;
+  nodeConfig.Init.Priority = MDMA_PRIORITY_LOW;
+  nodeConfig.Init.Endianness = MDMA_LITTLE_ENDIANNESS_PRESERVE;
+  nodeConfig.Init.SourceInc = MDMA_SRC_INC_HALFWORD;
+  nodeConfig.Init.DestinationInc = MDMA_DEST_INC_HALFWORD;
+  nodeConfig.Init.SourceDataSize = MDMA_SRC_DATASIZE_HALFWORD;
+  nodeConfig.Init.DestDataSize = MDMA_DEST_DATASIZE_HALFWORD;
+  nodeConfig.Init.DataAlignment = MDMA_DATAALIGN_RIGHT;
+  nodeConfig.Init.BufferTransferLength = 512;
+  nodeConfig.Init.SourceBurst = MDMA_SOURCE_BURST_SINGLE;
+  nodeConfig.Init.DestBurst = MDMA_DEST_BURST_SINGLE;
+  nodeConfig.Init.SourceBlockAddressOffset = 0;
+  nodeConfig.Init.DestBlockAddressOffset = 0;
+  nodeConfig.PostRequestMaskAddress = 0;
+  nodeConfig.PostRequestMaskData = 0;
+  nodeConfig.SrcAddress = (uint32_t)&adc_buf[0];
+  nodeConfig.DstAddress = (uint32_t)&ch6_buf[0];
+  nodeConfig.BlockDataLength = 2;
+  nodeConfig.BlockCount = 512;
+  if (HAL_MDMA_LinkedList_CreateNode(&node_mdma_channel1_sw_1, &nodeConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN mdma_channel1_sw_1 */
+
+  /* USER CODE END mdma_channel1_sw_1 */
+
+  /* Connect a node to the linked list */
+  if (HAL_MDMA_LinkedList_AddNode(&hmdma_mdma_channel1_sw_0, &node_mdma_channel1_sw_1, 0) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /* Initialize MDMA link node according to specified parameters */
+  nodeConfig.Init.Request = MDMA_REQUEST_SW;
+  nodeConfig.Init.TransferTriggerMode = MDMA_BLOCK_TRANSFER;
+  nodeConfig.Init.Priority = MDMA_PRIORITY_LOW;
+  nodeConfig.Init.Endianness = MDMA_LITTLE_ENDIANNESS_PRESERVE;
+  nodeConfig.Init.SourceInc = MDMA_SRC_INC_HALFWORD;
+  nodeConfig.Init.DestinationInc = MDMA_DEST_INC_HALFWORD;
+  nodeConfig.Init.SourceDataSize = MDMA_SRC_DATASIZE_HALFWORD;
+  nodeConfig.Init.DestDataSize = MDMA_DEST_DATASIZE_HALFWORD;
+  nodeConfig.Init.DataAlignment = MDMA_DATAALIGN_RIGHT;
+  nodeConfig.Init.BufferTransferLength = 512;
+  nodeConfig.Init.SourceBurst = MDMA_SOURCE_BURST_SINGLE;
+  nodeConfig.Init.DestBurst = MDMA_DEST_BURST_SINGLE;
+  nodeConfig.Init.SourceBlockAddressOffset = 0;
+  nodeConfig.Init.DestBlockAddressOffset = 0;
+  nodeConfig.PostRequestMaskAddress = 0;
+  nodeConfig.PostRequestMaskData = 0;
+  nodeConfig.SrcAddress = (uint32_t)&adc_buf[1];
+  nodeConfig.DstAddress = (uint32_t)&ch5_buf[0];
+  nodeConfig.BlockDataLength = 2;
+  nodeConfig.BlockCount = 512;
+  if (HAL_MDMA_LinkedList_CreateNode(&node_mdma_channel1_sw_2, &nodeConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN mdma_channel1_sw_2 */
+
+  /* USER CODE END mdma_channel1_sw_2 */
+
+  /* Connect a node to the linked list */
+  if (HAL_MDMA_LinkedList_AddNode(&hmdma_mdma_channel1_sw_0, &node_mdma_channel1_sw_2, 0) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /* Make the linked list circular by connecting the last node to the first */
+  if (HAL_MDMA_LinkedList_EnableCircularMode(&hmdma_mdma_channel1_sw_0) != HAL_OK)
   {
     Error_Handler();
   }
