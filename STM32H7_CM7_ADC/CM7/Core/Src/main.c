@@ -193,8 +193,9 @@ void app_check_when_ready(void)
 
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) {
 
-	  if (hadc->Instance == ADC1) {
-	// ADC1_Status =   HAL_ADC_Stop_DMA(&hadc1);
+	  if (hadc->Instance == ADC1)
+	  {
+		ADC1_Status =   HAL_ADC_Stop_DMA(&hadc1);
 
 		//  SCB_InvalidateDCache_by_Addr((uint32_t*)adc_buf, sizeof(adc_buf));
 		  ADC_DMA_Full_Flag += 1;
@@ -212,7 +213,7 @@ void HAL_MDMA_BufferCpltCallback(MDMA_HandleTypeDef *hdma) // “buffer done” 
 	MDMA_Buffer_Flag +=1;
 	mdma_buffers++;
 
-	//app_check_when_ready();
+	app_check_when_ready();
 
 }
 
