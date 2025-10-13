@@ -58,6 +58,8 @@ __IO uint32_t BspButtonState = BUTTON_RELEASED;
 ADC_HandleTypeDef hadc1;
 DMA_HandleTypeDef hdma_adc1;
 
+TIM_HandleTypeDef htim3;
+
 MDMA_HandleTypeDef hmdma_mdma_channel0_dma1_stream0_tc_0;
 MDMA_LinkNodeTypeDef node_mdma_channel0_dma1_stream0_tc_1;
 MDMA_LinkNodeTypeDef node_mdma_channel0_dma1_stream0_tc_2;
@@ -74,6 +76,7 @@ static void MX_DMA_Init(void);
 static void MX_GPIO_Init(void);
 static void MX_MDMA_Init(void);
 static void MX_ADC1_Init(void);
+static void MX_TIM3_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -90,11 +93,8 @@ static void MX_ADC1_Init(void);
 #define ADC_BUF_LEN   1024u              // must be multiple of 4
 #define CH_SAMPLES    (ADC_BUF_LEN/2u)   // 512 samples *per channel*
 
-  volatile uint16_t ch5_buf[CH_SAMPLES] = {0};
- volatile uint16_t ch6_buf[CH_SAMPLES];
-
-RAM_D2_NL volatile uint16_t ch5_data_mdma[CH_SAMPLES] = {0};
-RAM_D2_NL volatile uint16_t ch6_data_mdma[CH_SAMPLES] = {0};
+volatile uint16_t ch5_buf[CH_SAMPLES] = {0};
+volatile uint16_t ch6_buf[CH_SAMPLES];
 
 // Flags to know when data is ready
 volatile uint8_t ch_pair_half_ready = 0;   // first 256 samples per channel
@@ -167,7 +167,7 @@ static inline void avg_interleaved_block(volatile  uint16_t *base, uint32_t coun
 
 /* Two-sample buffer in rank order: [0]=CH10(PC0), [1]=CH16(PA0) */
 RAM_D2_NL volatile uint16_t adc_buf[1024] = {0};
-HAL_StatusTypeDef ADC1_Status;
+HAL_StatusTypeDef ADC1_Status, TIM3_status;
 static inline void ADC_ReadBuffer_Safely(void)
 {
     /* CM7 D-cache: invalidate before CPU reads the DMA-updated buffer */
@@ -192,7 +192,7 @@ void app_check_when_ready(void)
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) {
 
 	  if (hadc->Instance == ADC1) {
-	  ADC1_Status =   HAL_ADC_Stop_DMA(&hadc1);
+	 ADC1_Status =   HAL_ADC_Stop_DMA(&hadc1);
 
 		//  SCB_InvalidateDCache_by_Addr((uint32_t*)adc_buf, sizeof(adc_buf));
 		  ADC_DMA_Full_Flag += 1;
@@ -204,19 +204,6 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) {
 
 }
 
-//void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef* hadc) {
-//
-//	  if (hadc->Instance == ADC1) {
-//
-//		//  SCB_InvalidateDCache_by_Addr((uint32_t*)adc_buf, sizeof(adc_buf));
-//		  ADC_DMA_Half_Flag += 1;
-//		    ch_pair_half_ready = 1;   // you now have the first 256 samples/channel
-//		 		     half_ready = 1;
-//
-//	    }
-//
-//}
-
 uint32_t mdma_blocks, mdma_buffers = 0;
 
 void HAL_MDMA_BufferCpltCallback(MDMA_HandleTypeDef *hdma) // “buffer done” (BFTCIF)
@@ -227,22 +214,35 @@ void HAL_MDMA_BufferCpltCallback(MDMA_HandleTypeDef *hdma) // “buffer done” 
 
 	app_check_when_ready();
 
-
-}
-void HAL_MDMA_BlockCpltCallback(MDMA_HandleTypeDef *hdma) // “block done”  (BTIF)
-{
-	MDMA_Full_Flag += 1;
-
-}
-
-void HAL_MDMA_FullCpltCallback(MDMA_HandleTypeDef *hdma) // “block done”  (BTIF)
-{
-	MDMA_Block_Flag += 1;
-	 mdma_blocks++;
-
 }
 
 HAL_StatusTypeDef ADC1_Status;
+
+
+uint32_t TIM3_clock, TIM3_cnt_clk, TIM3_update_clock = 0;
+uint32_t GetTIM3Clock(void)
+{
+    uint32_t pclk1 = HAL_RCC_GetPCLK1Freq();
+    /* If APB1 prescaler is not DIV1, timer clock is 2x PCLK1 */
+    if ((RCC->D2CFGR & RCC_D2CFGR_D2PPRE1) != RCC_D2CFGR_D2PPRE1_DIV1)
+        return pclk1 * 2U;
+    else
+        return pclk1;
+}
+
+uint32_t TIM3_GetCounterClockHz(void)
+{
+    uint32_t timclk = GetTIM3Clock();
+    uint32_t psc    = 63u; // reads TIM3->PSC
+    return timclk / (psc + 1U);
+}
+
+uint32_t TIM3_GetUpdateEventHz(void)
+{
+    uint32_t ck_cnt = TIM3_GetCounterClockHz();
+    uint32_t arr    = __HAL_TIM_GET_AUTORELOAD(&htim3); // reads TIM3->ARR
+    return ck_cnt / (arr + 1U);
+}
 
 /* USER CODE END 0 */
 
@@ -285,6 +285,7 @@ int main(void)
   /* Configure the system clock */
   SystemClock_Config();
 /* USER CODE BEGIN Boot_Mode_Sequence_2 */
+
 #if defined(DUAL_CORE_BOOT_SYNC_SEQUENCE)
 /* When system initialization is finished, Cortex-M7 will release Cortex-M4 by means of
 HSEM notification */
@@ -306,7 +307,6 @@ Error_Handler();
 
   /* USER CODE BEGIN SysInit */
 
-Fill_TestPattern();
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
@@ -314,34 +314,47 @@ Fill_TestPattern();
   MX_GPIO_Init();
   MX_MDMA_Init();
   MX_ADC1_Init();
+ // MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
+
+
+  TIM3_clock = GetTIM3Clock();
+
+  TIM3_cnt_clk = TIM3_GetCounterClockHz();
+
+
+
+  TIM3_update_clock = TIM3_GetUpdateEventHz();
 
   assert(hdma_adc1.Instance == DMA1_Stream0);   // <— must be true
 
-  __HAL_RCC_SYSCFG_CLK_ENABLE();
-  HAL_SYSCFG_AnalogSwitchConfig(SYSCFG_SWITCH_PA0, SYSCFG_SWITCH_PA0_OPEN);
+    __HAL_RCC_SYSCFG_CLK_ENABLE();
+    HAL_SYSCFG_AnalogSwitchConfig(SYSCFG_SWITCH_PA0, SYSCFG_SWITCH_PA0_OPEN);
 
-  ADC1_Status = HAL_ADCEx_Calibration_Start(&hadc1, ADC_CALIB_OFFSET, ADC_SINGLE_ENDED);
+    ADC1_Status = HAL_ADCEx_Calibration_Start(&hadc1, ADC_CALIB_OFFSET, ADC_SINGLE_ENDED);
 
-  if (HAL_ADC_Start_DMA(&hadc1, (uint32_t*)adc_buf, 1024) != HAL_OK) {
-      Error_Handler();
-  }
+    if (HAL_ADC_Start_DMA(&hadc1, (uint32_t*)adc_buf, 1024) != HAL_OK) {
+        Error_Handler();
+    }
 
-//  HAL_MDMA_Start_IT(&hmdma_mdma_channel1_sw_0,
-//                    (uint32_t)&adc_buf_1[0],      // CH6 starts at even index
-//                    (uint32_t)&ch6_buf[0],
-//                    2,                           // BlockDataLength = 2 bytes (half-word)
-//                    512);                        // BlockCount     = 512 elements
-
-
-  HAL_MDMA_Start_IT(&hmdma_mdma_channel0_dma1_stream0_tc_0,
-                    (uint32_t)&adc_buf[0],      // CH6 starts at even index
-                    (uint32_t)&ch6_buf[0],
-                    2,                           // BlockDataLength = 2 bytes (half-word)
-                    512);                        // BlockCount     = 512 elements
+  //  HAL_MDMA_Start_IT(&hmdma_mdma_channel1_sw_0,
+  //                    (uint32_t)&adc_buf_1[0],      // CH6 starts at even index
+  //                    (uint32_t)&ch6_buf[0],
+  //                    2,                           // BlockDataLength = 2 bytes (half-word)
+  //                    512);                        // BlockCount     = 512 elements
 
 
- // HAL_MDMA_GenerateSWRequest(&hmdma_mdma_channel0_dma1_stream0_tc_0);  // <— should fire your MDMA IRQ
+    HAL_MDMA_Start_IT(&hmdma_mdma_channel0_dma1_stream0_tc_0,
+                      (uint32_t)&adc_buf[0],      // CH6 starts at even index
+                      (uint32_t)&ch6_buf[0],
+                      2,                           // BlockDataLength = 2 bytes (half-word)
+                      512);                        // BlockCount     = 512 elements
+
+
+    //TIM3_status = HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
+
+
+
 
   /* USER CODE END 2 */
 
@@ -375,15 +388,14 @@ Fill_TestPattern();
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+
+
   while (1)
   {
 
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-
-	//  HAL_MDMA_GenerateSWRequest(&hmdma_mdma_channel1_sw_0);
-	  //HAL_Delay(10);
 
 	   if (half_ready) {
 			  // First half: adc_buf[0 .. (ADC_BUF_LEN/2 - 1)]
@@ -395,16 +407,6 @@ Fill_TestPattern();
 	   }
 
 	   if (full_ready) {
-					     //half_ready = 0;
-//
-//			     	     // Optional: whole-buffer averages (cheap: just sum both halves)
-//			     	     uint16_t a5 = 0, a6 = 0;
-//			     	     avg_interleaved_block(&adc_buf[0], ADC_BUF_LEN/2, &a5, &a6);
-//			     	     uint16_t b5 = 0, b6 = 0;
-//			     	     avg_interleaved_block(&adc_buf[ADC_BUF_LEN/2], ADC_BUF_LEN/2, &b5, &b6);
-//			     	     ch5_avg_full = (uint16_t)(((uint32_t)a5 + b5) / 2u);
-//			     	     ch6_avg_full = (uint16_t)(((uint32_t)a6 + b6) / 2u);
-
 
 	       full_ready = 0;
 	       // ch5_avg_full / ch6_avg_full contain averages over the full 1024-sample buffer
@@ -547,6 +549,65 @@ static void MX_ADC1_Init(void)
 }
 
 /**
+  * @brief TIM3 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM3_Init(void)
+{
+
+  /* USER CODE BEGIN TIM3_Init 0 */
+
+  /* USER CODE END TIM3_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+  TIM_OC_InitTypeDef sConfigOC = {0};
+
+  /* USER CODE BEGIN TIM3_Init 1 */
+
+  /* USER CODE END TIM3_Init 1 */
+  htim3.Instance = TIM3;
+  htim3.Init.Prescaler = 63;
+  htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim3.Init.Period = 39;
+  htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim3, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_PWM_Init(&htim3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_UPDATE;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim3, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sConfigOC.OCMode = TIM_OCMODE_PWM1;
+  sConfigOC.Pulse = 20;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+  if (HAL_TIM_PWM_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM3_Init 2 */
+
+  /* USER CODE END TIM3_Init 2 */
+  HAL_TIM_MspPostInit(&htim3);
+
+}
+
+/**
   * Enable DMA controller clock
   */
 static void MX_DMA_Init(void)
@@ -598,12 +659,7 @@ static void MX_MDMA_Init(void)
   hmdma_mdma_channel0_dma1_stream0_tc_0.Init.SourceBlockAddressOffset = 2;
   hmdma_mdma_channel0_dma1_stream0_tc_0.Init.DestBlockAddressOffset = 0;
 
-
-  hmdma_mdma_channel0_dma1_stream0_tc_0.XferBlockCpltCallback =  HAL_MDMA_BlockCpltCallback;
   hmdma_mdma_channel0_dma1_stream0_tc_0.XferBufferCpltCallback =  HAL_MDMA_BufferCpltCallback;
-  hmdma_mdma_channel0_dma1_stream0_tc_0.XferCpltCallback   = HAL_MDMA_BlockCpltCallback;
-
-
 
   if (HAL_MDMA_Init(&hmdma_mdma_channel0_dma1_stream0_tc_0) != HAL_OK)
   {
@@ -642,7 +698,6 @@ static void MX_MDMA_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN mdma_channel0_dma1_stream0_tc_1 */
-
   /* USER CODE END mdma_channel0_dma1_stream0_tc_1 */
 
   /* Connect a node to the linked list */
@@ -710,9 +765,7 @@ static void MX_MDMA_Init(void)
   hmdma_mdma_channel1_sw_0.Init.SourceBlockAddressOffset = 2;
   hmdma_mdma_channel1_sw_0.Init.DestBlockAddressOffset = 0;
 
-  hmdma_mdma_channel1_sw_0.XferBlockCpltCallback =  HAL_MDMA_BlockCpltCallback;
   hmdma_mdma_channel1_sw_0.XferBufferCpltCallback =  HAL_MDMA_BufferCpltCallback;
-  hmdma_mdma_channel1_sw_0.XferCpltCallback   = HAL_MDMA_BlockCpltCallback;
 
 
   if (HAL_MDMA_Init(&hmdma_mdma_channel1_sw_0) != HAL_OK)
@@ -746,6 +799,7 @@ static void MX_MDMA_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN mdma_channel1_sw_1 */
+
 
   /* USER CODE END mdma_channel1_sw_1 */
 
