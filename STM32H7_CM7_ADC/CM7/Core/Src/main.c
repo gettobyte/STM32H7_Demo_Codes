@@ -68,8 +68,6 @@ TIM_HandleTypeDef htim3;
 ALIGN_32 MDMA_HandleTypeDef hmdma_mdma_channel0_dma1_stream0_tc_0;
 ALIGN_32 MDMA_LinkNodeTypeDef node_mdma_channel0_dma1_stream0_tc_1;
 ALIGN_32 MDMA_LinkNodeTypeDef node_mdma_channel0_dma1_stream0_tc_2;
-
-
 ALIGN_32 MDMA_HandleTypeDef hmdma_mdma_channel1_sw_0;
 ALIGN_32 MDMA_LinkNodeTypeDef node_mdma_channel1_sw_1;
 ALIGN_32 MDMA_LinkNodeTypeDef node_mdma_channel1_sw_2;
@@ -202,8 +200,6 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) {
 		  ADC_DMA_Full_Flag += 1;
 		      ch_pair_full_ready = 1;   // full 512 samples/channel now ready
 		      full_ready = 1;
-
-
 	    }
 
 }
@@ -314,14 +310,12 @@ Error_Handler();
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
-
-/* Initialize all configured peripherals */
-MX_TIM3_Init();
-MX_DMA_Init();
-MX_GPIO_Init();
-MX_MDMA_Init();
-MX_ADC1_Init();
-/* USER CODE BEGIN 2 */
+  MX_DMA_Init();
+  MX_GPIO_Init();
+  MX_MDMA_Init();
+  MX_ADC1_Init();
+  MX_TIM3_Init();
+  /* USER CODE BEGIN 2 */
 
 assert(hdma_adc1.Instance == DMA1_Stream0);   // <— must be true
 
@@ -343,7 +337,6 @@ HAL_MDMA_Start_IT(&hmdma_mdma_channel0_dma1_stream0_tc_0,
                   2,                           // BlockDataLength = 2 bytes (half-word)
                   512);                        // BlockCount     = 512 elements
 
-// HAL_MDMA_GenerateSWRequest(&hmdma_mdma_channel0_dma1_stream0_tc_0);  // <— should fire your MDMA IRQ
 
 TIM1_Status = HAL_TIM_IC_Start(&htim3, TIM_CHANNEL_1);
 
@@ -516,13 +509,13 @@ static void MX_ADC1_Init(void)
   hadc1.Init.ClockPrescaler = ADC_CLOCK_ASYNC_DIV16;
   hadc1.Init.Resolution = ADC_RESOLUTION_16B;
   hadc1.Init.ScanConvMode = ADC_SCAN_ENABLE;
-  hadc1.Init.EOCSelection = ADC_EOC_SEQ_CONV;
+  hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
   hadc1.Init.LowPowerAutoWait = DISABLE;
-  hadc1.Init.ContinuousConvMode = ENABLE;
+  hadc1.Init.ContinuousConvMode = DISABLE;
   hadc1.Init.NbrOfConversion = 2;
   hadc1.Init.DiscontinuousConvMode = DISABLE;
-  hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
-  hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
+  hadc1.Init.ExternalTrigConv = ADC_EXTERNALTRIG_T3_TRGO;
+  hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_RISING;
   hadc1.Init.ConversionDataManagement = ADC_CONVERSIONDATA_DMA_CIRCULAR;
   hadc1.Init.Overrun = ADC_OVR_DATA_PRESERVED;
   hadc1.Init.LeftBitShift = ADC_LEFTBITSHIFT_NONE;
@@ -680,8 +673,8 @@ static void MX_MDMA_Init(void)
   hmdma_mdma_channel0_dma1_stream0_tc_0.Init.SourceBlockAddressOffset = 2;
   hmdma_mdma_channel0_dma1_stream0_tc_0.Init.DestBlockAddressOffset = 0;
 
+    hmdma_mdma_channel0_dma1_stream0_tc_0.XferBufferCpltCallback =  HAL_MDMA_BufferCpltCallback;
 
-  hmdma_mdma_channel0_dma1_stream0_tc_0.XferBufferCpltCallback =  HAL_MDMA_BufferCpltCallback;
 
   if (HAL_MDMA_Init(&hmdma_mdma_channel0_dma1_stream0_tc_0) != HAL_OK)
   {
@@ -769,14 +762,6 @@ static void MX_MDMA_Init(void)
     Error_Handler();
   }
 
-
-  // after CreateNode/AddNode/EnableCircularMode and before HAL_MDMA_Start_IT()
-  SCB_CleanDCache_by_Addr((uint32_t*)&node_mdma_channel0_dma1_stream0_tc_1,
-                          sizeof(MDMA_LinkNodeTypeDef));
-  SCB_CleanDCache_by_Addr((uint32_t*)&node_mdma_channel0_dma1_stream0_tc_2,
-                          sizeof(MDMA_LinkNodeTypeDef));
-
-
   /* Configure MDMA channel MDMA_Channel1 */
   /* Configure MDMA request hmdma_mdma_channel1_sw_0 on MDMA_Channel1 */
   hmdma_mdma_channel1_sw_0.Instance = MDMA_Channel1;
@@ -825,6 +810,12 @@ static void MX_MDMA_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN mdma_channel1_sw_1 */
+
+  // after CreateNode/AddNode/EnableCircularMode and before HAL_MDMA_Start_IT()
+  SCB_CleanDCache_by_Addr((uint32_t*)&node_mdma_channel0_dma1_stream0_tc_1,
+                          sizeof(MDMA_LinkNodeTypeDef));
+  SCB_CleanDCache_by_Addr((uint32_t*)&node_mdma_channel0_dma1_stream0_tc_2,
+                          sizeof(MDMA_LinkNodeTypeDef));
 
 
   /* USER CODE END mdma_channel1_sw_1 */
