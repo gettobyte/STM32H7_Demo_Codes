@@ -80,18 +80,19 @@ DMA_HandleTypeDef hdma_adc1;
 
 TIM_HandleTypeDef htim3;
 
-ALIGN_32 MDMA_HandleTypeDef hmdma_mdma_channel0_dma1_stream0_tc_0;
-ALIGN_32 MDMA_LinkNodeTypeDef node_mdma_channel0_dma1_stream0_tc_1;
-ALIGN_32 MDMA_LinkNodeTypeDef node_mdma_channel0_dma1_stream0_tc_2;
-ALIGN_32 MDMA_HandleTypeDef hmdma_mdma_channel1_sw_0;
-ALIGN_32 MDMA_LinkNodeTypeDef node_mdma_channel1_sw_1;
-ALIGN_32 MDMA_LinkNodeTypeDef node_mdma_channel1_sw_2;
+MDMA_HandleTypeDef hmdma_mdma_channel0_dma1_stream0_tc_0;
+MDMA_LinkNodeTypeDef node_mdma_channel0_dma1_stream0_tc_1;
+MDMA_LinkNodeTypeDef node_mdma_channel0_dma1_stream0_tc_2;
+MDMA_HandleTypeDef hmdma_mdma_channel1_sw_0;
+MDMA_LinkNodeTypeDef node_mdma_channel1_sw_1;
+MDMA_LinkNodeTypeDef node_mdma_channel1_sw_2;
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
+void PeriphCommonClock_Config(void);
 static void MX_DMA_Init(void);
 static void MX_GPIO_Init(void);
 static void MX_MDMA_Init(void);
@@ -110,8 +111,9 @@ static void MX_TIM3_Init(void);
 #define ADC_BUF_LEN   1024u              // must be multiple of 4
 #define CH_SAMPLES    (ADC_BUF_LEN/2u)   // 512 samples *per channel*
 
-RAM_D2_NL volatile uint16_t ch5_buf[1] = {0};
+RAM_D2_NL volatile uint16_t ch5_buf[1];
 RAM_D2_NL volatile uint16_t ch6_buf[1];
+RAM_D2_NL volatile uint16_t ch7_buf[1];
 
 // Flags to know when data is ready
 volatile uint8_t ch_pair_half_ready = 0;   // first 256 samples per channel
@@ -183,7 +185,7 @@ static inline void avg_interleaved_block(volatile  uint16_t *base, uint32_t coun
 }
 
 /* Two-sample buffer in rank order: [0]=CH5(PC0), [1]=CH4(PA0) */
-RAM_D2_NL volatile uint16_t adc_buf[2] = {0};
+RAM_D2_NL volatile uint16_t adc_buf[3] = {0};
 HAL_StatusTypeDef ADC1_Status, TIM3_status;
 static inline void ADC_ReadBuffer_Safely(void)
 {
@@ -314,6 +316,9 @@ int main(void)
 
   /* Configure the system clock */
   SystemClock_Config();
+
+  /* Configure the peripherals common clocks */
+  PeriphCommonClock_Config();
 /* USER CODE BEGIN Boot_Mode_Sequence_2 */
 
 #if defined(DUAL_CORE_BOOT_SYNC_SEQUENCE)
@@ -337,17 +342,13 @@ Error_Handler();
 
   /* USER CODE BEGIN SysInit */
 
-  /* USER CODE END SysInit */
-
-  /* Initialize all configured peripherals */
+/* Initialize all configured peripherals */
   MX_DMA_Init();
   MX_GPIO_Init();
   MX_MDMA_Init();
   MX_ADC1_Init();
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
-
-	assert(hdma_adc1.Instance == DMA1_Stream0);   // <— must be true
 
 	__HAL_RCC_SYSCFG_CLK_ENABLE();
 	HAL_SYSCFG_AnalogSwitchConfig(SYSCFG_SWITCH_PA0, SYSCFG_SWITCH_PA0_OPEN);
@@ -371,10 +372,126 @@ Error_Handler();
 	TIM1_Status = HAL_TIM_PWM_Start_IT(&htim3, TIM_CHANNEL_1);
 
 
+  /* USER CODE END SysInit */
 
+  /* Initialize all configured peripherals */
+  MX_DMA_Init();
+  MX_GPIO_Init();
+  MX_MDMA_Init();
+  MX_ADC1_Init();
+  MX_TIM3_Init();
+  /* USER CODE BEGIN 2 */
+
+	__HAL_RCC_SYSCFG_CLK_ENABLE();
+	HAL_SYSCFG_AnalogSwitchConfig(SYSCFG_SWITCH_PA0, SYSCFG_SWITCH_PA0_OPEN);
+
+	ADC1_Status = HAL_ADCEx_Calibration_Start(&hadc1, ADC_CALIB_OFFSET, ADC_SINGLE_ENDED);
+
+
+	if (HAL_ADC_Start_DMA(&hadc1, (uint32_t*)adc_buf, 2) != HAL_OK) {
+	Error_Handler();
+	}
+
+	__HAL_TIM_DISABLE_DMA(&htim3, TIM_DMA_UPDATE | TIM_DMA_CC1 | TIM_DMA_CC2 | TIM_DMA_CC3 | TIM_DMA_CC4);
+
+	HAL_MDMA_Start_IT(&hmdma_mdma_channel0_dma1_stream0_tc_0,
+	  (uint32_t)&adc_buf[0],      // CH6 starts at even index
+	  (uint32_t)&ch6_buf[0],
+	  2,                           // BlockDataLength = 2 bytes (half-word)
+	  1);                        // BlockCount     = 512 elements
+
+	HAL_TIM_Base_Start_IT(&htim3);
+	TIM1_Status = HAL_TIM_PWM_Start_IT(&htim3, TIM_CHANNEL_1);
+
+
+  /* USER CODE END SysInit */
+
+  /* Initialize all configured peripherals */
+  MX_DMA_Init();
+  MX_GPIO_Init();
+  MX_MDMA_Init();
+  MX_ADC1_Init();
+  MX_TIM3_Init();
+  /* USER CODE BEGIN 2 */
+
+	__HAL_RCC_SYSCFG_CLK_ENABLE();
+	HAL_SYSCFG_AnalogSwitchConfig(SYSCFG_SWITCH_PA0, SYSCFG_SWITCH_PA0_OPEN);
+
+	ADC1_Status = HAL_ADCEx_Calibration_Start(&hadc1, ADC_CALIB_OFFSET, ADC_SINGLE_ENDED);
+
+
+	if (HAL_ADC_Start_DMA(&hadc1, (uint32_t*)adc_buf, 3) != HAL_OK) {
+	Error_Handler();
+	}
+
+	__HAL_TIM_DISABLE_DMA(&htim3, TIM_DMA_UPDATE | TIM_DMA_CC1 | TIM_DMA_CC2 | TIM_DMA_CC3 | TIM_DMA_CC4);
+
+	HAL_MDMA_Start_IT(&hmdma_mdma_channel0_dma1_stream0_tc_0,
+	  (uint32_t)&adc_buf[0],      // CH6 starts at even index
+	  (uint32_t)&ch6_buf[0],
+	  2,                           // BlockDataLength = 2 bytes (half-word)
+	  1);                        // BlockCount     = 512 elements
+
+	HAL_TIM_Base_Start_IT(&htim3);
+	TIM1_Status = HAL_TIM_PWM_Start_IT(&htim3, TIM_CHANNEL_1);
+
+
+  /* USER CODE END SysInit */
+
+  /* Initialize all configured peripherals */
+  MX_DMA_Init();
+  MX_GPIO_Init();
+  MX_MDMA_Init();
+  MX_ADC1_Init();
+  MX_TIM3_Init();
+  /* USER CODE BEGIN 2 */
+
+  /* USER CODE END 2 */
+
+  /* Initialize leds */
+  BSP_LED_Init(LED_GREEN);
+  BSP_LED_Init(LED_YELLOW);
+  BSP_LED_Init(LED_RED);
+
+  /* Initialize USER push-button, will be used to trigger an interrupt each time it's pressed.*/
+  BSP_PB_Init(BUTTON_USER, BUTTON_MODE_EXTI);
+
+  /* Initialize COM1 port (115200, 8 bits (7-bit data + 1 stop bit), no parity */
+  BspCOMInit.BaudRate   = 115200;
+  BspCOMInit.WordLength = COM_WORDLENGTH_8B;
+  BspCOMInit.StopBits   = COM_STOPBITS_1;
+  BspCOMInit.Parity     = COM_PARITY_NONE;
+  BspCOMInit.HwFlowCtl  = COM_HWCONTROL_NONE;
+  if (BSP_COM_Init(COM1, &BspCOMInit) != BSP_ERROR_NONE)
+  {
+    Error_Handler();
+  }
+
+  /* USER CODE BEGIN BSP */
+  /* -- Sample board code to send message over COM1 port ---- */
+  printf("Welcome to STM32 world !\n\r");
+  /* -- Sample board code to switch on leds ---- */
+  BSP_LED_On(LED_GREEN);
+  BSP_LED_On(LED_YELLOW);
+  BSP_LED_On(LED_RED);
+  /* USER CODE END BSP */
+
+  /* Infinite loop */
+  /* USER CODE BEGIN WHILE */
   while (1)
   {
 
+    /* -- Sample board code for User push-button in interrupt mode ---- */
+    if (BspButtonState == BUTTON_PRESSED)
+    {
+      /* Update button state */
+      BspButtonState = BUTTON_RELEASED;
+      /* -- Sample board code to toggle leds ---- */
+      BSP_LED_Toggle(LED_GREEN);
+      BSP_LED_Toggle(LED_YELLOW);
+      BSP_LED_Toggle(LED_RED);
+      /* ..... Perform your action ..... */
+    }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -448,6 +565,32 @@ void SystemClock_Config(void)
 }
 
 /**
+  * @brief Peripherals Common Clock Configuration
+  * @retval None
+  */
+void PeriphCommonClock_Config(void)
+{
+  RCC_PeriphCLKInitTypeDef PeriphClkInitStruct = {0};
+
+  /** Initializes the peripherals clock
+  */
+  PeriphClkInitStruct.PeriphClockSelection = RCC_PERIPHCLK_ADC;
+  PeriphClkInitStruct.PLL2.PLL2M = 4;
+  PeriphClkInitStruct.PLL2.PLL2N = 10;
+  PeriphClkInitStruct.PLL2.PLL2P = 2;
+  PeriphClkInitStruct.PLL2.PLL2Q = 2;
+  PeriphClkInitStruct.PLL2.PLL2R = 2;
+  PeriphClkInitStruct.PLL2.PLL2RGE = RCC_PLL2VCIRANGE_3;
+  PeriphClkInitStruct.PLL2.PLL2VCOSEL = RCC_PLL2VCOMEDIUM;
+  PeriphClkInitStruct.PLL2.PLL2FRACN = 0;
+  PeriphClkInitStruct.AdcClockSelection = RCC_ADCCLKSOURCE_PLL2;
+  if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct) != HAL_OK)
+  {
+    Error_Handler();
+  }
+}
+
+/**
   * @brief ADC1 Initialization Function
   * @param None
   * @retval None
@@ -475,11 +618,11 @@ static void MX_ADC1_Init(void)
   hadc1.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
   hadc1.Init.LowPowerAutoWait = DISABLE;
   hadc1.Init.ContinuousConvMode = DISABLE;
-  hadc1.Init.NbrOfConversion = 2;
+  hadc1.Init.NbrOfConversion = 3;
   hadc1.Init.DiscontinuousConvMode = DISABLE;
   hadc1.Init.ExternalTrigConv = ADC_EXTERNALTRIG_T3_TRGO;
   hadc1.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_RISING;
-  hadc1.Init.ConversionDataManagement = ADC_CONVERSIONDATA_DMA_CIRCULAR;
+  hadc1.Init.ConversionDataManagement = ADC_CONVERSIONDATA_DR;
   hadc1.Init.Overrun = ADC_OVR_DATA_PRESERVED;
   hadc1.Init.LeftBitShift = ADC_LEFTBITSHIFT_NONE;
   hadc1.Init.OversamplingMode = DISABLE;
@@ -515,6 +658,15 @@ static void MX_ADC1_Init(void)
   */
   sConfig.Channel = ADC_CHANNEL_16;
   sConfig.Rank = ADC_REGULAR_RANK_2;
+  if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure Regular Channel
+  */
+  sConfig.Channel = ADC_CHANNEL_15;
+  sConfig.Rank = ADC_REGULAR_RANK_3;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
   {
     Error_Handler();
@@ -588,7 +740,6 @@ static void MX_TIM3_Init(void)
   /* USER CODE END TIM3_Init 2 */
   HAL_TIM_MspPostInit(&htim3);
 
-
 }
 
 /**
@@ -643,10 +794,10 @@ static void MX_MDMA_Init(void)
   hmdma_mdma_channel0_dma1_stream0_tc_0.Init.SourceBlockAddressOffset = 2;
   hmdma_mdma_channel0_dma1_stream0_tc_0.Init.DestBlockAddressOffset = 0;
 
-    hmdma_mdma_channel0_dma1_stream0_tc_0.XferBufferCpltCallback =  HAL_MDMA_BufferCpltCallback;
-    hmdma_mdma_channel0_dma1_stream0_tc_0.XferBlockCpltCallback = HAL_MDMA_BlockCpltCallback;
+  hmdma_mdma_channel0_dma1_stream0_tc_0.XferBufferCpltCallback =  HAL_MDMA_BufferCpltCallback;
 
-    if (HAL_MDMA_Init(&hmdma_mdma_channel0_dma1_stream0_tc_0) != HAL_OK)
+
+  if (HAL_MDMA_Init(&hmdma_mdma_channel0_dma1_stream0_tc_0) != HAL_OK)
   {
     Error_Handler();
   }
@@ -728,6 +879,104 @@ static void MX_MDMA_Init(void)
 
   /* Make the linked list circular by connecting the last node to the first */
   if (HAL_MDMA_LinkedList_EnableCircularMode(&hmdma_mdma_channel0_dma1_stream0_tc_0) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /* Configure MDMA channel MDMA_Channel1 */
+  /* Configure MDMA request hmdma_mdma_channel1_sw_0 on MDMA_Channel1 */
+  hmdma_mdma_channel1_sw_0.Instance = MDMA_Channel1;
+  hmdma_mdma_channel1_sw_0.Init.Request = MDMA_REQUEST_SW;
+  hmdma_mdma_channel1_sw_0.Init.TransferTriggerMode = MDMA_BUFFER_TRANSFER;
+  hmdma_mdma_channel1_sw_0.Init.Priority = MDMA_PRIORITY_LOW;
+  hmdma_mdma_channel1_sw_0.Init.Endianness = MDMA_LITTLE_ENDIANNESS_PRESERVE;
+  hmdma_mdma_channel1_sw_0.Init.SourceInc = MDMA_SRC_INC_HALFWORD;
+  hmdma_mdma_channel1_sw_0.Init.DestinationInc = MDMA_DEST_INC_HALFWORD;
+  hmdma_mdma_channel1_sw_0.Init.SourceDataSize = MDMA_SRC_DATASIZE_HALFWORD;
+  hmdma_mdma_channel1_sw_0.Init.DestDataSize = MDMA_DEST_DATASIZE_HALFWORD;
+  hmdma_mdma_channel1_sw_0.Init.DataAlignment = MDMA_DATAALIGN_RIGHT;
+  hmdma_mdma_channel1_sw_0.Init.BufferTransferLength = 512;
+  hmdma_mdma_channel1_sw_0.Init.SourceBurst = MDMA_SOURCE_BURST_SINGLE;
+  hmdma_mdma_channel1_sw_0.Init.DestBurst = MDMA_DEST_BURST_SINGLE;
+  hmdma_mdma_channel1_sw_0.Init.SourceBlockAddressOffset = 2;
+  hmdma_mdma_channel1_sw_0.Init.DestBlockAddressOffset = 0;
+  if (HAL_MDMA_Init(&hmdma_mdma_channel1_sw_0) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /* Initialize MDMA link node according to specified parameters */
+  nodeConfig.Init.Request = MDMA_REQUEST_SW;
+  nodeConfig.Init.TransferTriggerMode = MDMA_BUFFER_TRANSFER;
+  nodeConfig.Init.Priority = MDMA_PRIORITY_LOW;
+  nodeConfig.Init.Endianness = MDMA_LITTLE_ENDIANNESS_PRESERVE;
+  nodeConfig.Init.SourceInc = MDMA_SRC_INC_HALFWORD;
+  nodeConfig.Init.DestinationInc = MDMA_DEST_INC_HALFWORD;
+  nodeConfig.Init.SourceDataSize = MDMA_SRC_DATASIZE_HALFWORD;
+  nodeConfig.Init.DestDataSize = MDMA_DEST_DATASIZE_HALFWORD;
+  nodeConfig.Init.DataAlignment = MDMA_DATAALIGN_RIGHT;
+  nodeConfig.Init.BufferTransferLength = 512;
+  nodeConfig.Init.SourceBurst = MDMA_SOURCE_BURST_SINGLE;
+  nodeConfig.Init.DestBurst = MDMA_DEST_BURST_SINGLE;
+  nodeConfig.Init.SourceBlockAddressOffset = 2;
+  nodeConfig.Init.DestBlockAddressOffset = 0;
+  nodeConfig.PostRequestMaskAddress = 0;
+  nodeConfig.PostRequestMaskData = 0;
+  nodeConfig.SrcAddress = (uint32_t)&adc_buf_1[0];
+  nodeConfig.DstAddress = (uint32_t)&ch6_buf[0];
+  nodeConfig.BlockDataLength = 2;
+  nodeConfig.BlockCount = 512;
+  if (HAL_MDMA_LinkedList_CreateNode(&node_mdma_channel1_sw_1, &nodeConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN mdma_channel1_sw_1 */
+
+  /* USER CODE END mdma_channel1_sw_1 */
+
+  /* Connect a node to the linked list */
+  if (HAL_MDMA_LinkedList_AddNode(&hmdma_mdma_channel1_sw_0, &node_mdma_channel1_sw_1, 0) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /* Initialize MDMA link node according to specified parameters */
+  nodeConfig.Init.Request = MDMA_REQUEST_SW;
+  nodeConfig.Init.TransferTriggerMode = MDMA_BUFFER_TRANSFER;
+  nodeConfig.Init.Priority = MDMA_PRIORITY_LOW;
+  nodeConfig.Init.Endianness = MDMA_LITTLE_ENDIANNESS_PRESERVE;
+  nodeConfig.Init.SourceInc = MDMA_SRC_INC_HALFWORD;
+  nodeConfig.Init.DestinationInc = MDMA_DEST_INC_HALFWORD;
+  nodeConfig.Init.SourceDataSize = MDMA_SRC_DATASIZE_HALFWORD;
+  nodeConfig.Init.DestDataSize = MDMA_DEST_DATASIZE_HALFWORD;
+  nodeConfig.Init.DataAlignment = MDMA_DATAALIGN_RIGHT;
+  nodeConfig.Init.BufferTransferLength = 512;
+  nodeConfig.Init.SourceBurst = MDMA_SOURCE_BURST_SINGLE;
+  nodeConfig.Init.DestBurst = MDMA_DEST_BURST_SINGLE;
+  nodeConfig.Init.SourceBlockAddressOffset = 2;
+  nodeConfig.Init.DestBlockAddressOffset = 0;
+  nodeConfig.PostRequestMaskAddress = 0;
+  nodeConfig.PostRequestMaskData = 0;
+  nodeConfig.SrcAddress = (uint32_t)&adc_buf_1[1];
+  nodeConfig.DstAddress = (uint32_t)&ch5_buf[0];
+  nodeConfig.BlockDataLength = 2;
+  nodeConfig.BlockCount = 512;
+  if (HAL_MDMA_LinkedList_CreateNode(&node_mdma_channel1_sw_2, &nodeConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN mdma_channel1_sw_2 */
+
+  /* USER CODE END mdma_channel1_sw_2 */
+
+  /* Connect a node to the linked list */
+  if (HAL_MDMA_LinkedList_AddNode(&hmdma_mdma_channel1_sw_0, &node_mdma_channel1_sw_2, 0) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /* Make the linked list circular by connecting the last node to the first */
+  if (HAL_MDMA_LinkedList_EnableCircularMode(&hmdma_mdma_channel1_sw_0) != HAL_OK)
   {
     Error_Handler();
   }

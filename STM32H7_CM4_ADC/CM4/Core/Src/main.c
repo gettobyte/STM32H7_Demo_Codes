@@ -141,6 +141,18 @@ void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef* hadc)
 	  }
 }
 
+uint32_t mdma_blocks, mdma_buffers = 0;
+
+void HAL_MDMA_BufferCpltCallback(MDMA_HandleTypeDef *hdma) // “buffer done” (BFTCIF)
+{
+	// MDMA wrote the destinations: make CPU see the data
+//	MDMA_Buffer_Flag +=1;
+//	mdma_buffers++;
+//
+//	app_check_when_ready();
+
+}
+
 
 
 /* USER CODE END PV */
@@ -238,11 +250,11 @@ int main(void)
      Error_Handler();
    }
 
-   HAL_MDMA_Start_IT(&hmdma_mdma_channel0_dma1_stream0_tc_0,
-                     (uint32_t)&adc_buf[0],      // CH5 starts at odd index
-                     (uint32_t)&ch6_buf[0],
-                     2,                           // BlockDataLength = 2 bytes (half-word)
-                     512);                        // BlockCount     = 512 elements
+//   HAL_MDMA_Start_IT(&hmdma_mdma_channel0_dma1_stream0_tc_0,
+//                     (uint32_t)&adc_buf[0],      // CH5 starts at odd index
+//                     (uint32_t)&ch6_buf[0],
+//                     2,                           // BlockDataLength = 2 bytes (half-word)
+//                     512);                        // BlockCount     = 512 elements
 
   /* USER CODE END 2 */
 
@@ -389,6 +401,10 @@ static void MX_MDMA_Init(void)
   hmdma_mdma_channel0_dma1_stream0_tc_0.Init.DestBurst = MDMA_SOURCE_BURST_SINGLE;
   hmdma_mdma_channel0_dma1_stream0_tc_0.Init.SourceBlockAddressOffset = 2;
   hmdma_mdma_channel0_dma1_stream0_tc_0.Init.DestBlockAddressOffset = 0;
+
+  hmdma_mdma_channel0_dma1_stream0_tc_0.XferBufferCpltCallback =  HAL_MDMA_BufferCpltCallback;
+
+
   if (HAL_MDMA_Init(&hmdma_mdma_channel0_dma1_stream0_tc_0) != HAL_OK)
   {
     Error_Handler();
